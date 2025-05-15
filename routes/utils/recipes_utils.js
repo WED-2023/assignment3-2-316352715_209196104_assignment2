@@ -1,5 +1,6 @@
 const axios = require("axios");
 const api_domain = "https://api.spoonacular.com/recipes";
+const DButils = require("./DButils");
 
 
 
@@ -33,6 +34,22 @@ async function getRecipeDetails(recipe_id) {
         glutenFree: glutenFree,
         
     }
+}
+
+
+async function saveUserRecipe(body, user_id) {
+      const {
+    img, id, name, time,
+    popularity, isVegan, isVegetarian,
+    isGlutenFree, releaseDate
+  } = body;
+  
+    await DButils.execQuery(
+    `INSERT INTO PersonalRecipes
+    (user_id, recipe_id, name, img, time, popularity, isVegan, isVegetarian, isGlutenFree, releaseDate)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [user_id, id, name, img, time, popularity, isVegan, isVegetarian, isGlutenFree, releaseDate]
+  );    
 }
 
 
