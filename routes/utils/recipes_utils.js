@@ -3,6 +3,7 @@ const api_domain = "https://api.spoonacular.com/recipes";
 
 
 
+
 /**
  * Get recipes list from spooncular response and extract the relevant recipe data for preview
  * @param {*} recipes_info 
