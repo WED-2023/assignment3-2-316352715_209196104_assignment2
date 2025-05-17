@@ -37,24 +37,26 @@ async function getRecipeDetails(recipe_id) {
 }
 
 
-async function saveUserRecipe(body, user_id) {
+async function saveUserRecipe(body, user_id,recipe_id) {
+  
       const {
-    img, id, name, time,
+    img, name, time,
     popularity, isVegan, isVegetarian,
     isGlutenFree, releaseDate
   } = body;
   
-    await DButils.execQuery(
-    `INSERT INTO PersonalRecipes
+  await DButils.execQuery(
+    `INSERT INTO PersonalRecipes 
     (user_id, recipe_id, name, img, time, popularity, isVegan, isVegetarian, isGlutenFree, releaseDate)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [user_id, id, name, img, time, popularity, isVegan, isVegetarian, isGlutenFree, releaseDate]
-  );    
+    VALUES ('${user_id}', '${recipe_id}', '${name}', '${img}', '${time}', '${popularity}', '${isVegan ? 1 : 0}', '${isVegetarian ? 1 : 0}', '${isGlutenFree ? 1 : 0}', '${releaseDate}')`
+  );
+
 }
 
 
 
 exports.getRecipeDetails = getRecipeDetails;
+exports.saveUserRecipe = saveUserRecipe;
 
 
 

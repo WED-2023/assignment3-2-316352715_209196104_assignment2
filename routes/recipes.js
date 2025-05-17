@@ -37,6 +37,7 @@ router.post("/:id", async(req,res,next) => {
         "isGlutenFree", "releaseDate"
       ];
       console.log("BODY:", req.body);
+      console.log("params:", req.params);
 
       //check if the required fields are not null
 
@@ -50,13 +51,15 @@ router.post("/:id", async(req,res,next) => {
         return res.status(401).send({message:"User not logged in" })
       }
       const user_id = req.session.user_id;
-      await recipes_utils.saveUserRecipe(req.body,user_id)
+      const recipe_id = req.params.id;
+      await recipes_utils.saveUserRecipe(req.body,user_id,recipe_id)
       res.status(201).send({message:"Recipe saved successfully"})
       
 }catch(err){
   next(err);
 }
 });
+
 
 
 

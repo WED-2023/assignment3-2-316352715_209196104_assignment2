@@ -6,7 +6,7 @@ const config={
 connectionLimit:4,
   host: process.env.host,//"localhost"
   user: process.env.user,//"root"
-  password: process.env.DBpassword,
+  password: '13579112Rom!',
   database:process.env.database
   // database:"mydb"
 }
