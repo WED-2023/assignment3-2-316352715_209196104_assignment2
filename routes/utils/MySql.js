@@ -1,6 +1,13 @@
-var mysql = require('mysql2');
-require("dotenv").config();
+const mysql = require('mysql2/promise');
+require('dotenv').config();
 
+const pool = mysql.createPool({
+  connectionLimit: 4,
+  host: process.env.host,
+  user: process.env.user,
+  password: process.env.db_password,
+  database: process.env.database
+});
 
 const config={
 connectionLimit:4,
@@ -44,11 +51,3 @@ const query = (sql, binding) => {
     });
   });
 };
-module.exports = { pool, connection, query };
-
-
-
-
-
-
-

@@ -19,6 +19,95 @@ tags:
 - name: developers
   description: Operations available to regular developers
 paths:
+
+  openapi: 3.0.0
+info:
+  title: Recipe App API
+  version: 1.0.0
+  description: API for managing user registration, login and logout
+
+servers:
+  - url: http://localhost:3000
+
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - firstname
+                - lastname
+                - country
+                - email
+                - password
+              properties:
+                username:
+                  type: string
+                firstname:
+                  type: string
+                lastname:
+                  type: string
+                country:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+                profilePic:
+                  type: string
+      responses:
+        '201':
+          description: User successfully registered
+        '409':
+          description: Username already taken
+        '500':
+          description: Internal server error
+
+  /auth/login:
+    post:
+      summary: Login a user
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login succeeded
+        '401':
+          description: Username or password incorrect
+        '500':
+          description: Internal server error
+
+  /auth/logout:
+    post:
+      summary: Logout the current user
+      tags:
+        - Auth
+      responses:
+        '200':
+          description: Logout succeeded
+
+
   /recipes:
     get:
       tags:
@@ -63,32 +152,8 @@ paths:
                   $ref: '#/components/schemas/RecipeStructure'
         "400":
           description: bad input parameter
-  /recipes/{id}:
-    get:
-      tags:
-      - developers
-      - users
-      summary: searches recipe by id
-      description: |
-        Get a recipe by its ID
-      operationId: searchRecipeById
-      parameters:
-      - name: id
-        in: path
-        description: the id of a specific recipe
-        required: true
-        schema:
-          type: integer
-      responses:
-        "200":
-          description: "return recipe with the id = {id}"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RecipeStructure'
-        "400":
-          description: bad input parameter
-    post:
+
+  post:
       tags:
       - admins
       summary: adds a recipe
@@ -114,6 +179,38 @@ paths:
           description: "invalid input, object invalid"
         "409":
           description: an existing recipe already exists
+
+  /recipes/{id}:
+    get:
+      tags:
+      - developers
+      - users
+      summary: searches recipe by id
+      description: |
+        Get a recipe by its ID
+      operationId: searchRecipeById
+      parameters:
+      - name: id
+        in: path
+        description: the id of a specific recipe
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          description: "return recipe with the id = {id}"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeStructure'
+        "400":
+          description: bad input parameter
+    
+
+
+
+
+
   /users:
     get:
       tags:
@@ -150,31 +247,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
-    post:
-      tags:
-      - admins
-      summary: Register a new user
-      operationId: registerUser
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        description: New user registration info
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/User'
-        required: true
-      responses:
-        "201":
-          description: User created successfully
-        "400":
-          description: Invalid user input
-        "409":
-          description: User already exists
+    
+
+
+
 components:
   schemas:
     RecipeStructure:
@@ -227,10 +303,10 @@ components:
       required:
       - country
       - email
-      - firstName
+      - firstname
       - id
       - isAdmin
-      - lastName
+      - lastname
       - password
       - username
       type: object
@@ -253,10 +329,10 @@ components:
           type: string
           description: "Password must be 5–10 chars, include a number and special char"
           example: Pa$$12
-        firstName:
+        firstname:
           type: string
           example: moshi
-        lastName:
+        lastname:
           type: string
           example: shori
         country:
@@ -299,10 +375,10 @@ components:
         username:
           type: string
           example: shraga
-        firstName:
+        firstname:
           type: string
           example: moshi
-        lastName:
+        lastname:
           type: string
           example: shori
         myRecipes:
