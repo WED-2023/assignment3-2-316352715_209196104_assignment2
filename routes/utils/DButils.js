@@ -17,3 +17,4 @@ exports.execQuery = async function (query, params = []) {
   }
   return returnValue[0];
 };
+// module.exports = { connection, query };
