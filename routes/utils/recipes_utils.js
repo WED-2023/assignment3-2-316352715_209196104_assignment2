@@ -97,15 +97,23 @@ async function getRecipeInformation(recipe_id) {
     });
 }
 
-{
-    "title": "Anchovies Appetizer With Breadcrumbs & Scallions",
-    "readyInMinutes": 15,
-    "image": "https://img.spoonacular.com/recipes/2-556x370.jpg",
-    "popularity": 0,
-    "vegan": false,
-    "vegetarian": false,
-    "glutenFree": false,
-    "instructions": "<ol><li>Preheat oven to 400 F.</li><li>Remove crusts from bread and cut into bite-sized croutons.</li><li>Rub garlic in bottom of a small oven-safe skillet, add 2 teaspoons olive oil.</li><li> Rub croutons in oil until they absorb it all. </li><li>Bake for 7-10 minutes or until deep golden brown. </li><li>Remove and set aside.</li><li>Slice anchovies in thirds. </li><li>Toss with scallions. </li><li>Divide into small cups, ramekins or bowls between 4 and 8 ounces and nestle in the croutons.</li></ol>"
+async function getRecipeDetails(recipe_id) {
+    let recipe_info = await getRecipeInformation(recipe_id);
+    let { id_recipe, title, readyInMinutes, image, aggregateLikes, vegan, vegetarian, glutenFree,ingredients,instructions,description } = recipe_info.data;
+
+    return {
+        id_recipe: id_recipe,
+        title: title,
+        readyInMinutes: readyInMinutes,
+        image: image,
+        popularity: aggregateLikes,
+        vegan: vegan,
+        vegetarian: vegetarian,
+        glutenFree: glutenFree,
+        ingredients: ingredients,
+        instructions: instructions,
+        description: description,
+    }
 }
 async function getLocalRecipesPreview() {
   const dbRecipes = await DButils.execQuery("SELECT * FROM PersonalRecipes");
