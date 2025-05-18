@@ -1,40 +1,357 @@
 openapi: 3.0.0
 info:
   title: Recipe website API
-  description: "This API powers the Recipes Website. \n\n**Client Responsibilities:**\n- Display recipes\n- Collect user input for filtering, creating, or editing recipes\n- Show appropriate success/error messages\n- Update users favourite recipes\n- Update users viewed recipes\n- Ensure correct input format from the user \n\n\n\n**Server Responsibilities:**\n- Store and manage recipe data securely\n- Authenticate and authorize users\n- Serve filtered, sorted, or paginated responses|\n- Store favourite recipes for each user\n- Store family recipes for each user\n- Store viewed recipes for each user\n"
+  version: "1.0.0"
+  description: |
+    This API powers the Recipes Website.
+
+    **Client Responsibilities:**
+    - Display recipes
+    - Collect user input for filtering, creating, or editing recipes
+    - Show appropriate success/error messages
+    - Update users favourite recipes
+    - Update users viewed recipes
+    - Ensure correct input format from the user
+
+    **Server Responsibilities:**
+    - Store and manage recipe data securely
+    - Authenticate and authorize users
+    - Serve filtered, sorted, or paginated responses
+    - Store favourite recipes for each user
+    - Store family recipes for each user
+    - Store viewed recipes for each user
   contact:
-    email: you@your-company.com
+    email: liozsh@post.bgu.ac.il
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
-  version: 1.0.0
+
 servers:
-- url: https://virtserver.swaggerhub.com/bgu-2f9/RecipesAPI/1.0.0
-  description: SwaggerHub API Auto Mocking
-- url: https://virtserver.swaggerhub.com/bgu-2f9/RecipesWebsite/1.0.0
-  description: SwaggerHub API Auto Mocking
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/bgu-2f9/RecipesAPI/1.0.0
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/bgu-2f9/RecipesWebsite/1.0.0
+
 tags:
-- name: admins
-  description: Secured Admin-only calls
-- name: developers
-  description: Operations available to regular developers
-paths:
-
-  openapi: 3.0.0
-info:
-  title: Recipe App API
-  version: 1.0.0
-  description: API for managing user registration, login and logout
-
-servers:
-  - url: http://localhost:3000
+  - name: admins
+    description: Secured Admin-only calls
+  - name: developers
+    description: Operations available to regular developers
+  - name: users
+    description: Calls available to regular users
 
 paths:
+  /recipes:
+    get:
+      tags: [users]
+      summary: Search recipes
+      operationId: getRecipes
+      description: Search for recipes with optional filters
+      parameters:
+        - in: query
+          name: name
+          schema:
+            type: string
+        - in: query
+          name: cuisine
+          schema:
+            type: string
+        - in: query
+          name: diet
+          schema:
+            type: string
+        - in: query
+          name: intolerance
+          schema:
+            type: string
+        - in: query
+          name: skip
+          schema:
+            type: integer
+            minimum: 0
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+      responses:
+        '200':
+          description: List of matching recipes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RecipeStructure'
+        '400':
+          description: Bad input parameter
+          
+    
+    post:
+      tags: [users]
+      summary: Add a new recipe
+      operationId: addRecipe
+      security: 
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecipeStructure'
+      responses:
+        '201':
+          description: Recipe created successfully
+        '400':
+          description: Invalid input
+        '409':
+          description: Recipe already exists
+          
+  /recipes/family-recipes:
+    get:
+      tags: [users]
+      summary: Get all family recipes
+      operationId: getAllFamilyRecipes
+      description: Returns a list of public family recipes published by the site admin.
+      responses:
+        '200':
+          description: List of family recipes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FamilyRecipe'
+
+  /recipes/family-recipes/{id}:
+    get:
+      tags: [users]
+      summary: Get a single family recipe by ID
+      operationId: getFamilyRecipeById
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: A single family recipe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FamilyRecipe'
+        '404':
+          description: Family recipe not found
+
+
+  /recipes/{id}:
+    get:
+      tags: [users]
+      summary: Get recipe by ID
+      operationId: getRecipeById
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Recipe found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeStructure'
+        '400':
+          description: Invalid ID
+        '404':
+          description: Recipe not found
+
+
+
+  /users:
+    get:
+      tags: [admins]
+      summary: Get all users
+      operationId: getAllUsers
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserSummary'
+  
+  /users/{id}:
+    get:
+      tags: [users, developers]
+      summary: Get user by ID
+      operationId: getUserById
+      security: 
+        - sessionAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSafe'
+
+  /users/me:
+    put:
+      tags: [users]
+      summary: Update current user
+      operationId: updateCurrentUser
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstname:
+                  type: string
+                lastname:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                country:
+                  type: string
+                profilePic:
+                  type: string
+                  format: uri
+      responses:
+        '200':
+          description: Updated user data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSafe'
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+        
+        
+    get:
+      tags: [users]
+      summary: Get current logged-in user
+      operationId: getCurrentUser
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Current user data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSafe'
+        '401':
+          description: Not logged in
+
+  /users/{id}/recipes:
+    get:
+      tags: [users]
+      summary: Get user's created recipes
+      operationId: getUserCreatedRecipes
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: List of recipes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RecipeStructure'
+        '401':
+          description: Unauthorized
+
+  /users/{id}/favorites:
+    get:
+      tags: [users]
+      summary: Get user's favorite recipes
+      operationId: getUserFavorites
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: List of favorite recipe IDs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: integer
+        '401':
+          description: Unauthorized
+          
+    post:
+      tags: [users]
+      summary: Add recipe to user's favorites
+      operationId: addFavoriteRecipe
+      security:
+        - sessionAuth: []
+      parameters:  
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - recipeId
+              properties:
+                recipeId:
+                  type: integer
+      responses:
+        '200':
+          description: Recipe added to favorites
+        '400':
+          description: Invalid recipe ID
+        '401':
+          description: Unauthorized
+
+    
+
+
+
   /auth/register:
     post:
+      tags: [users]
       summary: Register a new user
-      tags:
-        - Auth
+      operationId: registerUser
       requestBody:
         required: true
         content:
@@ -51,6 +368,9 @@ paths:
               properties:
                 username:
                   type: string
+                  minLength: 3
+                  maxLength: 8
+                  example: shraga
                 firstname:
                   type: string
                 lastname:
@@ -59,23 +379,26 @@ paths:
                   type: string
                 email:
                   type: string
+                  format: email
                 password:
                   type: string
+                  pattern: '^(?=.*[0-9])(?=.*[^A-Za-z0-9]).{5,10}$'
                 profilePic:
                   type: string
+                  format: uri
       responses:
         '201':
-          description: User successfully registered
+          description: User created
+        '400':
+          description: Validation failed
         '409':
-          description: Username already taken
-        '500':
-          description: Internal server error
+          description: Username already exists
 
   /auth/login:
     post:
-      summary: Login a user
-      tags:
-        - Auth
+      tags: [users]
+      summary: Login to the system
+      operationId: loginUser
       requestBody:
         required: true
         content:
@@ -92,204 +415,73 @@ paths:
                   type: string
       responses:
         '200':
-          description: Login succeeded
+          description: |
+            Login succeeded. A session cookie named `session_id` is set.
+          headers:
+            Set-Cookie:
+              description: Session ID cookie
+              schema:
+                type: string
+                example: session_id=abc123; HttpOnly; Path=/; SameSite=Lax
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Login successful
         '401':
-          description: Username or password incorrect
-        '500':
-          description: Internal server error
+          description: Invalid credentials
 
   /auth/logout:
     post:
-      summary: Logout the current user
-      tags:
-        - Auth
+      tags: [users]
+      summary: Logout from the system
+      operationId: logoutUser
       responses:
         '200':
           description: Logout succeeded
 
-
-  /recipes:
-    get:
-      tags:
-      - developers
-      summary: searches recipes
-      description: |
-        By passing in the appropriate options, you can search for
-        available recepies
-      operationId: searchRecipes
-      parameters:
-      - name: recipeType
-        in: query
-        description: pass an optional search string for looking up specific type of recipes
-        required: false
-        schema:
-          type: string
-      - name: skip
-        in: query
-        description: number of records to skip for pagination
-        required: false
-        schema:
-          minimum: 0
-          type: integer
-          format: int32
-      - name: limit
-        in: query
-        description: maximum number of records to return
-        required: false
-        schema:
-          maximum: 50
-          minimum: 0
-          type: integer
-          format: int32
-      responses:
-        "200":
-          description: return all the recipes
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/RecipeStructure'
-        "400":
-          description: bad input parameter
-
-  post:
-      tags:
-      - admins
-      summary: adds a recipe
-      description: Adds a recipe to the system
-      operationId: addRecipe
-      parameters:
-      - name: id
-        in: path
-        description: the id of a specific recipe
-        required: true
-        schema:
-          type: integer
-      requestBody:
-        description: Recipe item to add
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RecipeStructure'
-      responses:
-        "201":
-          description: recipe created
-        "400":
-          description: "invalid input, object invalid"
-        "409":
-          description: an existing recipe already exists
-
-  /recipes/{id}:
-    get:
-      tags:
-      - developers
-      - users
-      summary: searches recipe by id
-      description: |
-        Get a recipe by its ID
-      operationId: searchRecipeById
-      parameters:
-      - name: id
-        in: path
-        description: the id of a specific recipe
-        required: true
-        schema:
-          type: integer
-      responses:
-        "200":
-          description: "return recipe with the id = {id}"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RecipeStructure'
-        "400":
-          description: bad input parameter
-    
-
-
-
-
-
-  /users:
-    get:
-      tags:
-      - developers
-      - users
-      summary: Get all users
-      operationId: getAllUsers
-      responses:
-        "200":
-          description: List of users
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/UserSummary'
-  /users/{id}:
-    get:
-      tags:
-      - developers
-      - users
-      summary: Get user details by ID
-      operationId: getUserById
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: User data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-    
-
-
-
 components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: session_id
+
   schemas:
     RecipeStructure:
-      required:
-      - id
-      - img
-      - isGlutenFree
-      - isVegan
-      - isVegetarian
-      - name
-      - popularity
-      - releaseDate
-      - time
       type: object
+      required:
+        - img
+        - id
+        - name
+        - time
+        - popularity
+        - isVegan
+        - isVegetarian
+        - isGlutenFree
+        - ingredients
+        - instructions
       properties:
+        id:
+          type: integer
+        name:
+          type: string
+          example: Vegan Pasta
         img:
           type: string
           format: uri
-          example: https://app.swaggerhub.com/apis/bgu-2f9/RecipesWebsite/img
-        id:
-          type: string
-          format: uuid
-          example: d290f1ee-6c54-4b01-90e6-d701748f0851
-        name:
-          type: string
-          example: Pasta Marinara
+          example: https://example.com/images/pasta.jpg
         time:
           type: integer
-          description: duration in minutes
-          example: 45
-        releaseDate:
-          type: string
-          format: date-time
-          example: 2016-08-29T09:12:33.001Z
+          description: Preparation time in minutes
+          example: 25
         popularity:
           type: number
-          description: Rating out of 5
           format: float
-          example: 4.5
+          example: 4.6
         isVegan:
           type: boolean
           example: true
@@ -298,93 +490,105 @@ components:
           example: true
         isGlutenFree:
           type: boolean
-          example: true
-    User:
-      required:
-      - country
-      - email
-      - firstname
-      - id
-      - isAdmin
-      - lastname
-      - password
-      - username
+          example: false
+        ingredients:
+          type: array
+          items:
+            type: string
+          example: ["Tomato", "Pasta", "Basil"]
+        instructions:
+          type: string
+          example: "Boil pasta. Add sauce. Mix well."
+        description:
+          type: string
+          example: "A delicious quick vegan pasta recipe with a tangy tomato sauce."
+
+            
+    UserSafe:
       type: object
+      required:
+        - id
+        - username
+        - email
+        - country
+        - firstName
+        - lastName
       properties:
         id:
-          type: string
-          format: uuid
-          example: 123e4567-e89b-12d3-a456-426614174000
+          type: integer
         username:
-          maxLength: 8
-          minLength: 3
           type: string
-          example: shraga
         email:
           type: string
           format: email
-          example: dror@example.com
-        password:
-          pattern: "^(?=.*[0-9])(?=.*[^A-Za-z0-9]).{5,10}$"
+        firstName:
           type: string
-          description: "Password must be 5–10 chars, include a number and special char"
-          example: Pa$$12
-        firstname:
+        lastName:
           type: string
-          example: moshi
-        lastname:
-          type: string
-          example: shori
         country:
           type: string
-          example: Israel
-        isAdmin:
-          type: boolean
-          example: false
         favorites:
           type: array
-          example:
-          - 101
-          - 102
           items:
             type: integer
         myRecipes:
           type: array
-          example:
-          - 201
-          - 202
           items:
             type: integer
         myFamilyRecipes:
           type: array
-          example:
-          - 301
-          - 302
           items:
             type: integer
-        viewedRecpies:
-          type: array
-          example:
-          - 301
-          - 302
-          items:
-            type: integer
+
+
     UserSummary:
       type: object
       properties:
+        id:
+          type: integer
         username:
           type: string
-          example: shraga
-        firstname:
+        firstName:
           type: string
-          example: moshi
-        lastname:
+        lastName:
           type: string
-          example: shori
         myRecipes:
           type: array
-          example:
-          - 201
-          - 202
           items:
             type: integer
+            
+            
+    FamilyRecipe:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - originator
+        - occasion
+        - story
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+          example: Grandma’s Stuffed Peppers
+        description:
+          type: string
+          example: Classic dish passed down generations.
+        originator:
+          type: string
+          example: Grandma Rivka
+        occasion:
+          type: string
+          example: Rosh Hashanah
+        story:
+          type: string
+          example: "Grandma Rivka made these every year when the whole family gathered..."
+        passed_down_by:
+          type: string
+          example: Aunt Sara
+        original_note_image:
+          type: string
+          format: uri
+          example: https://example.com/images/original-recipe.jpg

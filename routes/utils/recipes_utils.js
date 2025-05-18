@@ -69,7 +69,7 @@ async function getUserRecipes(user_id, recipe_id=null) {
   let recipes;
   if(recipe_id) {
       recipes = await DButils.execQuery(
-      `SELECT * FROM PersonalRecipes WHERE user_id='${user_id}' AND id='${recipe_id}'`
+      `SELECT * FROM PersonalRecipes WHERE user_id='${user_id}' AND recipe_id='${recipe_id}'`
     );
   }else {  
     recipes = await DButils.execQuery(
