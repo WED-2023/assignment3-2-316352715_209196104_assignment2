@@ -67,7 +67,7 @@ router.get("/me", async (req, res, next) => {
   try {
 
     const user = await DButils.execQuery(
-      `SELECT id, username, firstname, lastname, email, country, profilePic FROM users WHERE id = ?`,
+      `SELECT user_id, username, firstname, lastname, email, country, profilepic FROM users WHERE user_id = ?`,
       [req.session.user_id]
     );
     res.send(user[0]);
@@ -82,7 +82,7 @@ router.put("/me", async (req, res, next) => {
     }
 
     const user = await DButils.execQuery(
-      `SELECT id, username, firstname, lastname, email, country, profilePic FROM users WHERE id = ?`,
+      `SELECT user_id, username, firstname, lastname, email, country, profilepic FROM users WHERE user_id = ?`,
       [req.session.user_id]
     );
     if (user.length === 0) {

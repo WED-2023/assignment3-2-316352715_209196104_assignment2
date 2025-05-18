@@ -133,13 +133,13 @@ async function saveUserRecipe(body, user_id) {
   const {
     img, name, time,
     popularity, isVegan, isVegetarian,
-    isGlutenFree, releaseDate,
+    isGlutenFree,
     ingredients, instructions, description
   } = body;
 
   await DButils.execQuery(
     `INSERT INTO PersonalRecipes 
-    (user_id, name, img, time, popularity, isVegan, isVegetarian, isGlutenFree, ingredients, instructions, description, releaseDate)
+    (user_id, name, img, time, popularity, isVegan, isVegetarian, isGlutenFree, ingredients, instructions, description)
     VALUES (
       '${user_id}', 
       '${name}', 
@@ -151,8 +151,8 @@ async function saveUserRecipe(body, user_id) {
       '${isGlutenFree ? 1 : 0}', 
       '${JSON.stringify(ingredients)}', 
       '${instructions}', 
-      '${description}', 
-      '${releaseDate}'
+      '${description}' 
+
     )`
   );
 }

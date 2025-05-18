@@ -134,11 +134,10 @@ router.post(
       profilePic: req.body.profilePic ?? null
     }
 
-    let users = [];
-    users = await DButils.execQuery("SELECT username from users");
-
-    if (users.find((x) => x.username === user_details.username))
-      throw { status: 409, message: "Username taken" };
+    let userExists = await DButils.execQuery("SELECT username FROM users WHERE username = ?", [user_details.username]);
+    if (userExists.length > 0) {
+        throw { status: 409, message: "Username taken" };
+      }
 
     // add the new username
     let hash_password = bcrypt.hashSync(
@@ -147,7 +146,7 @@ router.post(
     );
 
 await DButils.execQuery(
-  `INSERT INTO users (username, firstname, lastname, country, password, email, profilePic) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+  `INSERT INTO users (username, firstname, lastname, country, password, email, profilepic) VALUES (?, ?, ?, ?, ?, ?, ?)`,
   [
     user_details.username,
     user_details.firstname,
@@ -175,7 +174,8 @@ router.post("/login", async (req, res, next) => {
     // check that the password is correct
     const user = (
       await DButils.execQuery(
-      `SELECT * FROM users WHERE username = '${req.body.username}'`
+              `SELECT * FROM users WHERE username = ?`,
+          [req.body.username]
       )
     )[0];
 

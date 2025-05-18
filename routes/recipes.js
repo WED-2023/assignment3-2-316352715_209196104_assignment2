@@ -96,7 +96,7 @@ router.post("/", async(req,res,next) => {
       const requiredFields = [
         "img", "name", "time",
         "popularity", "isVegan", "isVegetarian",
-        "isGlutenFree", "releaseDate","ingredients","instructions"
+        "isGlutenFree","ingredients","instructions"
       ];
       console.log("BODY:", req.body);
       console.log("params:", req.params);
