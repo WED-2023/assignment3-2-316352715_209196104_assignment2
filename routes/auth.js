@@ -94,20 +94,16 @@ router.post("/login", async (req, res, next) => {
       throw { status: 401, message: "Username or Password incorrect" };
 
     // check that the password is correct
-    const user = (
-      await DButils.execQuery(
-        `SELECT * FROM users WHERE username = ?`,
-        [req.body.username]
-      )
-    )[0];
+const user = (
+  await DButils.execQuery(`SELECT user_id, password FROM users WHERE username = ?`, [req.body.username])
+)[0];
 
-
-    if (!bcrypt.compareSync(req.body.password, user.password)) {
-      throw { status: 401, message: "Username or Password incorrect" };
-    }
+if (!user || !bcrypt.compareSync(req.body.password, user.password)) {
+  throw { status: 401, message: "Username or Password incorrect" };
+}
 
     // Set cookie
-    req.session.user_id = user.id;
+    req.session.user_id = user.user_id;
     console.log("session user_id login: " + req.session.user_id);
 
     // return cookie
@@ -124,4 +120,3 @@ router.post("/logout", function (req, res) {
 });
 
 module.exports = router;
-

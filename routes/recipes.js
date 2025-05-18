@@ -58,7 +58,7 @@ router.get("/family-recipes/:id", async (req, res, next) => {
     if (!req.session || !req.session.user_id) {
       return res.status(401).send({ message: "User not logged in" });
     }
-    const recipe = await recipes_utils.getFamilyRecipeDetails(req.params.id);
+    const recipe = await recipes_utils.getFamilyRecipeDetails(req.params.recipe_id);
     res.status(200).send(recipe);
   } catch (error) {
     next(error);
@@ -73,7 +73,7 @@ router.get("/family-recipes/:id", async (req, res, next) => {
 router.get("/:id", async (req, res, next) => {
   try {
     const recipe = await recipes_utils.getRecipeDetails(req.params.id);
-    const recipe_id = recipe.id;
+    const recipe_id = recipe.recipe_id;
     res.send(recipe);
 
     if (req.session && req.session.user_id) {
@@ -96,7 +96,7 @@ router.post("/", async(req,res,next) => {
       const requiredFields = [
         "img", "name", "time",
         "popularity", "isVegan", "isVegetarian",
-        "isGlutenFree", "releaseDate","ingredients","instructions"
+        "isGlutenFree","ingredients","instructions"
       ];
       console.log("BODY:", req.body);
       console.log("params:", req.params);

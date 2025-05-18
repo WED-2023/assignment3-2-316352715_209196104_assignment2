@@ -67,7 +67,7 @@ router.get("/me", async (req, res, next) => {
   try {
 
     const user = await DButils.execQuery(
-      `SELECT id, username, firstname, lastname, email, country, profilePic FROM users WHERE id = ?`,
+      `SELECT user_id, username, firstname, lastname, email, country, profilepic FROM users WHERE user_id = ?`,
       [req.session.user_id]
     );
     res.send(user[0]);
@@ -82,7 +82,7 @@ router.put("/me", async (req, res, next) => {
     }
 
     const user = await DButils.execQuery(
-      `SELECT id, username, firstname, lastname, email, country, profilePic FROM users WHERE id = ?`,
+      `SELECT user_id, username, firstname, lastname, email, country, profilepic FROM users WHERE user_id = ?`,
       [req.session.user_id]
     );
     if (user.length === 0) {
@@ -90,13 +90,13 @@ router.put("/me", async (req, res, next) => {
     }
 
     const updatedUser = await DButils.execQuery(
-      `UPDATE users SET firstname = ?, lastname = ?, email = ?, country = ?, profilePic = ? WHERE id = ?`,
+      `UPDATE users SET firstname = ?, lastname = ?, email = ?, country = ?, profilepic = ? WHERE user_id = ?`,
       [
         req.body.firstname || user[0].firstname,
         req.body.lastname || user[0].lastname,
         req.body.email || user[0].email,
         req.body.country || user[0].country,
-        req.body.profilePic || user[0].profilePic,
+        req.body.profilepic || user[0].profilepic,
         req.session.user_id
       ]
     );
