@@ -69,7 +69,7 @@ async function getUserRecipes(user_id, recipe_id=null) {
   let recipes;
   if(recipe_id) {
       recipes = await DButils.execQuery(
-      `SELECT * FROM PersonalRecipes WHERE user_id='${user_id}' AND id='${recipe_id}'`
+      `SELECT * FROM PersonalRecipes WHERE user_id='${user_id}' AND id_recipe='${recipe_id}'`
     );
   }else {  
     recipes = await DButils.execQuery(
@@ -77,7 +77,7 @@ async function getUserRecipes(user_id, recipe_id=null) {
 );
   }
   return recipes.map(r => ({
-    id: r.recipe_id,
+    id_recipe: r.recipe_id,
     title: r.name,
     image: r.img,
     readyInMinutes: r.time,
@@ -97,21 +97,15 @@ async function getRecipeInformation(recipe_id) {
     });
 }
 
-async function getRecipeDetails(recipe_id) {
-    let recipe_info = await getRecipeInformation(recipe_id);
-    let { id, title, readyInMinutes, image, aggregateLikes, vegan, vegetarian, glutenFree } = recipe_info.data;
-
-    return {
-        id: id,
-        title: title,
-        readyInMinutes: readyInMinutes,
-        image: image,
-        popularity: aggregateLikes,
-        vegan: vegan,
-        vegetarian: vegetarian,
-        glutenFree: glutenFree,
-        
-    }
+{
+    "title": "Anchovies Appetizer With Breadcrumbs & Scallions",
+    "readyInMinutes": 15,
+    "image": "https://img.spoonacular.com/recipes/2-556x370.jpg",
+    "popularity": 0,
+    "vegan": false,
+    "vegetarian": false,
+    "glutenFree": false,
+    "instructions": "<ol><li>Preheat oven to 400 F.</li><li>Remove crusts from bread and cut into bite-sized croutons.</li><li>Rub garlic in bottom of a small oven-safe skillet, add 2 teaspoons olive oil.</li><li> Rub croutons in oil until they absorb it all. </li><li>Bake for 7-10 minutes or until deep golden brown. </li><li>Remove and set aside.</li><li>Slice anchovies in thirds. </li><li>Toss with scallions. </li><li>Divide into small cups, ramekins or bowls between 4 and 8 ounces and nestle in the croutons.</li></ol>"
 }
 async function getLocalRecipesPreview() {
   const dbRecipes = await DButils.execQuery("SELECT * FROM PersonalRecipes");
