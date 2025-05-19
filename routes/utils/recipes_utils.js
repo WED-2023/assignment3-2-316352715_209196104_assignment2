@@ -215,6 +215,25 @@ async function getRecipesPreview(recipes_id_list) {
     recipes_id_list.map((id) => getRecipeDetails(id))
   );
 }
+async function getRandomSpoonacularRecipesPreview(count = 3) {
+  const response = await axios.get(`${api_domain}/random`, {
+    params: {
+      apiKey: process.env.spooncular_apiKey,
+      number: count
+    }
+  });
+
+  return response.data.recipes.map(r => ({
+    id: r.id,
+    title: r.title,
+    image: r.image,
+    readyInMinutes: r.readyInMinutes,
+    popularity: r.aggregateLikes || 0,
+    vegan: r.vegan,
+    vegetarian: r.vegetarian,
+    glutenFree: r.glutenFree
+  }));
+}
 
 
 
@@ -228,3 +247,4 @@ exports.getLocalRecipesPreview = getLocalRecipesPreview;
 exports.getUserRecipes = getUserRecipes;
 exports.getFamilyRecipes = getFamilyRecipes;
 exports.searchSpoonacularRecipes = searchSpoonacularRecipes;
+exports.getRandomSpoonacularRecipesPreview = getRandomSpoonacularRecipesPreview;

@@ -25,6 +25,16 @@ router.get("/", async (req, res, next) => {
     next(err);
   }
 });
+router.get("/random", async (req, res, next) => {
+  try {
+    const recipes = await recipes_utils.getRandomSpoonacularRecipesPreview(3);
+    res.status(200).send(recipes);
+  } catch (err) {
+    next(err);
+  }
+});
+
+
 router.get("/myRecipes", async (req, res, next) => {
   try {
     if (!req.session || !req.session.user_id) {
