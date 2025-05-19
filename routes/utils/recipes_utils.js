@@ -234,6 +234,42 @@ async function getRandomSpoonacularRecipesPreview(count = 3) {
     glutenFree: r.glutenFree
   }));
 }
+async function getViewedRecipesPreview(session) {
+  if (!session || !session.viewedRecipes || session.viewedRecipes.length === 0) {
+    return [];
+  }
+
+  const recipeIds = session.viewedRecipes.slice(-3); 
+  const previews = [];
+
+  for (const id of recipeIds) {
+    try {
+      const res = await axios.get(`${api_domain}/${id}/information`, {
+        params: {
+          apiKey: process.env.spooncular_apiKey,
+          includeNutrition: false
+        }
+      });
+
+      const r = res.data;
+
+      previews.push({
+        id: r.id,
+        title: r.title,
+        image: r.image,
+        readyInMinutes: r.readyInMinutes,
+        popularity: r.aggregateLikes || 0,
+        vegan: r.vegan,
+        vegetarian: r.vegetarian,
+        glutenFree: r.glutenFree
+      });
+    } catch (err) {
+      console.warn(`Failed to fetch recipe ID ${id}:`, err.response?.status || err.message);
+    }
+  }
+
+  return previews;
+}
 
 
 
@@ -248,3 +284,4 @@ exports.getUserRecipes = getUserRecipes;
 exports.getFamilyRecipes = getFamilyRecipes;
 exports.searchSpoonacularRecipes = searchSpoonacularRecipes;
 exports.getRandomSpoonacularRecipesPreview = getRandomSpoonacularRecipesPreview;
+exports.getViewedRecipesPreview = getViewedRecipesPreview;

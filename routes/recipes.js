@@ -3,6 +3,7 @@ var router = express.Router();
 const recipes_utils = require("./utils/recipes_utils");
 const { route } = require("./user");
 
+
 router.get("/", async (req, res, next) => {
   try {
     const queryParams = req.query;
@@ -16,7 +17,7 @@ router.get("/", async (req, res, next) => {
     } else {
       externalRecipes = await recipes_utils.getSpoonacularRecipesPreview(10, 0);
     }
-
+    
     const localRecipes = await recipes_utils.getLocalRecipesPreview();
     const allRecipes = [...localRecipes, ...externalRecipes];
 
@@ -29,6 +30,15 @@ router.get("/random", async (req, res, next) => {
   try {
     const recipes = await recipes_utils.getRandomSpoonacularRecipesPreview(3);
     res.status(200).send(recipes);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get("/viewed", async (req, res, next) => {
+  try {
+    const previews = await recipes_utils.getViewedRecipesPreview(req.session);
+    res.status(200).send(previews);
   } catch (err) {
     next(err);
   }
@@ -92,23 +102,33 @@ router.get("/family-recipes/:id", async (req, res, next) => {
  */
 router.get("/:id", async (req, res, next) => {
   try {
-    const recipe = await recipes_utils.getRecipeDetails(req.params.id);
-    const recipe_id = recipe.id;
-    res.send(recipe);
+    let recipe;
+    let recipe_id;
+    console.log("Session BEFORE:", req.session.viewedRecipes);
 
+     recipe = await recipes_utils.getRecipeDetails(req.params.id);
+     recipe_id = req.params.id;
     if (req.session && req.session.user_id) {
-      if (!req.session.viewedRecipes) {
+      if (!Array.isArray(req.session.viewedRecipes)) {
         req.session.viewedRecipes = [];
       }
+
       if (!req.session.viewedRecipes.includes(recipe_id)) {
         req.session.viewedRecipes.push(recipe_id);
       }
-    }
+
+      console.log("Session AFTER:", req.session.viewedRecipes, recipe_id);
+
+  }
+
+    res.send(recipe);
 
   } catch (error) {
     next(error);
   }
 });
+
+
 
 
 router.post("/", async(req,res,next) => {
