@@ -112,7 +112,7 @@ async function getRecipeDetails(recipe_id) {
         glutenFree: glutenFree,
         ingredients: ingredients,
         instructions: instructions,
-        description: description,
+        description: description
     }
 }
 async function getLocalRecipesPreview() {
