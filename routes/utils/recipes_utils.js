@@ -104,7 +104,7 @@ async function getUserRecipes(user_id, recipe_id=null) {
   let recipes;
   if(recipe_id) {
       recipes = await DButils.execQuery(
-      `SELECT * FROM recipes WHERE user_id='${user_id}' AND id_recipe='${recipe_id}'`
+      `SELECT * FROM recipes WHERE user_id='${user_id}' AND recipe_id='${recipe_id}'`
     );
   }else {  
     recipes = await DButils.execQuery(
@@ -112,7 +112,7 @@ async function getUserRecipes(user_id, recipe_id=null) {
 );
   }
   return recipes.map(r => ({
-    id_recipe: r.recipe_id,
+    recipe_id: r.recipe_id,
     title: r.name,
     image: r.img,
     readyInMinutes: r.time,
@@ -133,23 +133,27 @@ async function getRecipeInformation(recipe_id) {
 }
 
 async function getRecipeDetails(recipe_id) {
-    let recipe_info = await getRecipeInformation(recipe_id);
-    let { id_recipe, title, readyInMinutes, image, aggregateLikes, vegan, vegetarian, glutenFree,ingredients,instructions,description } = recipe_info.data;
+  const recipe_info = await getRecipeInformation(recipe_id);
+  const {
+    id, title, readyInMinutes, image, aggregateLikes,
+    vegan, vegetarian, glutenFree, ingredients, instructions, description
+  } = recipe_info.data;
 
-    return {
-        id_recipe: id_recipe,
-        title: title,
-        readyInMinutes: readyInMinutes,
-        image: image,
-        popularity: aggregateLikes,
-        vegan: vegan,
-        vegetarian: vegetarian,
-        glutenFree: glutenFree,
-        ingredients: ingredients,
-        instructions: instructions,
-        description: description
-    }
+  return {
+    id,
+    title,
+    readyInMinutes,
+    image,
+    popularity: aggregateLikes,
+    vegan,
+    vegetarian,
+    glutenFree,
+    ingredients,
+    instructions,
+    description
+  };
 }
+
 async function getLocalRecipesPreview() {
   const dbRecipes = await DButils.execQuery("SELECT * FROM recipes");
 
@@ -161,9 +165,10 @@ async function getLocalRecipesPreview() {
     popularity: r.popularity,
     vegan: r.isVegan === 1,
     vegetarian: r.isVegetarian === 1,
-    glutenFree: r.isGlutenFree === 1,
+    glutenFree: r.isGlutenFree === 1
   }));
 }
+
 
 
 async function saveUserRecipe(body, user_id) {
@@ -177,20 +182,20 @@ async function saveUserRecipe(body, user_id) {
   await DButils.execQuery(
     `INSERT INTO recipes 
     (user_id, name, img, time, popularity, isVegan, isVegetarian, isGlutenFree, ingredients, instructions, description)
-    VALUES (
-      '${user_id}', 
-      '${name}', 
-      '${img}', 
-      '${time}', 
-      '${popularity}', 
-      '${isVegan ? 1 : 0}', 
-      '${isVegetarian ? 1 : 0}', 
-      '${isGlutenFree ? 1 : 0}', 
-      '${JSON.stringify(ingredients)}', 
-      '${instructions}', 
-      '${description}' 
-
-    )`
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      user_id,
+      name,
+      img,
+      time,
+      popularity,
+      isVegan ? 1 : 0,
+      isVegetarian ? 1 : 0,
+      isGlutenFree ? 1 : 0,
+      JSON.stringify(ingredients),
+      instructions,
+      description
+    ]
   );
 }
 

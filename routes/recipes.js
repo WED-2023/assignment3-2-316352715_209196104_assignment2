@@ -104,8 +104,6 @@ router.get("/:id", async (req, res, next) => {
   try {
     let recipe;
     let recipe_id;
-    console.log("Session BEFORE:", req.session.viewedRecipes);
-
      recipe = await recipes_utils.getRecipeDetails(req.params.id);
      recipe_id = req.params.id;
     if (req.session && req.session.user_id) {
@@ -117,7 +115,7 @@ router.get("/:id", async (req, res, next) => {
         req.session.viewedRecipes.push(recipe_id);
       }
 
-      console.log("Session AFTER:", req.session.viewedRecipes, recipe_id);
+
 
   }
 
