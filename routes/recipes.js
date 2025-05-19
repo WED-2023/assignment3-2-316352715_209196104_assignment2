@@ -9,18 +9,33 @@ router.get("/", async (req, res, next) => {
     const queryParams = req.query;
 
     let externalRecipes;
-
-    const hasSearchParams = Object.keys(queryParams).length > 0;
+    const limit = parseInt(queryParams.limit) || 10;
+    const sortBy = queryParams.sortBy; // 'popularity' or 'readyInMinutes'
+    const order = queryParams.order === "desc" ? "desc" : "asc";
+    const nonSearchParams = new Set(["limit", "sortBy", "order"]);
+    const searchParams = Object.keys(queryParams).filter(
+      (key) => !nonSearchParams.has(key)
+    );
+    const hasSearchParams = searchParams.length > 0;
 
     if (hasSearchParams) {
+      if (req.session) {
+        req.session.lastSearch = queryParams;
+        console.log("session last search", req.session.lastSearch);
+      }
       externalRecipes = await recipes_utils.searchSpoonacularRecipes(queryParams);
     } else {
-      externalRecipes = await recipes_utils.getSpoonacularRecipesPreview(10, 0);
+      externalRecipes = await recipes_utils.getSpoonacularRecipesPreview(limit, 0);
     }
     
-    const localRecipes = await recipes_utils.getLocalRecipesPreview();
+    //const localRecipes = await recipes_utils.getLocalRecipesPreview();
     const allRecipes = [...localRecipes, ...externalRecipes];
-
+    if (sortBy && ["popularity", "readyInMinutes"].includes(sortBy)) {
+      allRecipes.sort((a, b) => {
+        if (order === "desc") return b[sortBy] - a[sortBy];
+        else return a[sortBy] - b[sortBy];
+      });
+    }
     res.status(200).send(allRecipes);
   } catch (err) {
     next(err);
