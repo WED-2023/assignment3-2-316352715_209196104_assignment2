@@ -47,6 +47,41 @@ async function getFamilyRecipes(recipe_id = null) {
   }));
 }
 
+async function searchSpoonacularRecipes(params) {
+  const {
+    name,
+    cuisine,
+    diet,
+    intolerance,
+    limit = 10,
+    skip = 0
+  } = params;
+
+  const response = await axios.get(`${api_domain}/complexSearch`, {
+    params: {
+      apiKey: process.env.spooncular_apiKey,
+      query: name || '',
+      cuisine,
+      diet,
+      intolerance,
+      number: limit,
+      offset: skip,
+      addRecipeInformation: true
+    }
+  });
+
+  return response.data.results.map(r => ({
+    id: r.id,
+    title: r.title,
+    image: r.image,
+    readyInMinutes: r.readyInMinutes,
+    popularity: r.aggregateLikes || 0,
+    vegan: r.vegan,
+    vegetarian: r.vegetarian,
+    glutenFree: r.glutenFree
+  }));
+}
+
 async function getSpoonacularRecipesPreview(limit = 50, offset = 0) {
   const response = await axios.get(`${api_domain}/complexSearch`, {
     params: {
@@ -69,11 +104,11 @@ async function getUserRecipes(user_id, recipe_id=null) {
   let recipes;
   if(recipe_id) {
       recipes = await DButils.execQuery(
-      `SELECT * FROM PersonalRecipes WHERE user_id='${user_id}' AND id_recipe='${recipe_id}'`
+      `SELECT * FROM recipes WHERE user_id='${user_id}' AND id_recipe='${recipe_id}'`
     );
   }else {  
     recipes = await DButils.execQuery(
-  `SELECT * FROM PersonalRecipes WHERE user_id='${user_id}'`
+  `SELECT * FROM recipes WHERE user_id='${user_id}'`
 );
   }
   return recipes.map(r => ({
@@ -116,7 +151,7 @@ async function getRecipeDetails(recipe_id) {
     }
 }
 async function getLocalRecipesPreview() {
-  const dbRecipes = await DButils.execQuery("SELECT * FROM PersonalRecipes");
+  const dbRecipes = await DButils.execQuery("SELECT * FROM recipes");
 
   return dbRecipes.map((r) => ({
     id: r.recipe_id,
@@ -140,7 +175,7 @@ async function saveUserRecipe(body, user_id) {
   } = body;
 
   await DButils.execQuery(
-    `INSERT INTO PersonalRecipes 
+    `INSERT INTO recipes 
     (user_id, name, img, time, popularity, isVegan, isVegetarian, isGlutenFree, ingredients, instructions, description)
     VALUES (
       '${user_id}', 
@@ -192,4 +227,4 @@ exports.getSpoonacularRecipesPreview = getSpoonacularRecipesPreview;
 exports.getLocalRecipesPreview = getLocalRecipesPreview;
 exports.getUserRecipes = getUserRecipes;
 exports.getFamilyRecipes = getFamilyRecipes;
-
+exports.searchSpoonacularRecipes = searchSpoonacularRecipes;

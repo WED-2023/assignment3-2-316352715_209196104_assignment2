@@ -5,9 +5,19 @@ const { route } = require("./user");
 
 router.get("/", async (req, res, next) => {
   try {
-    const externalRecipes = await recipes_utils.getSpoonacularRecipesPreview(10, 0);
-    const localRecipes = await recipes_utils.getLocalRecipesPreview();
+    const queryParams = req.query;
 
+    let externalRecipes;
+
+    const hasSearchParams = Object.keys(queryParams).length > 0;
+
+    if (hasSearchParams) {
+      externalRecipes = await recipes_utils.searchSpoonacularRecipes(queryParams);
+    } else {
+      externalRecipes = await recipes_utils.getSpoonacularRecipesPreview(10, 0);
+    }
+
+    const localRecipes = await recipes_utils.getLocalRecipesPreview();
     const allRecipes = [...localRecipes, ...externalRecipes];
 
     res.status(200).send(allRecipes);
