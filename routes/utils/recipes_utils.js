@@ -178,7 +178,21 @@ async function saveUserRecipe(body, user_id) {
     isGlutenFree,
     ingredients, instructions, description
   } = body;
+  
+  const result = await DButils.execQuery(`
+    SELECT id FROM recipes 
+    WHERE id LIKE 'L%' 
+    ORDER BY CAST(SUBSTRING(id, 2) AS UNSIGNED) DESC 
+    LIMIT 1
+  `);
 
+  let newId;
+  if (result.length === 0) {
+    newId = "L1";
+  } else {
+    const lastIdNum = parseInt(result[0].id.slice(1));
+    newId = `L${lastIdNum + 1}`;
+  }
   await DButils.execQuery(
     `INSERT INTO recipes 
     (user_id, name, img, time, popularity, isVegan, isVegetarian, isGlutenFree, ingredients, instructions, description)
