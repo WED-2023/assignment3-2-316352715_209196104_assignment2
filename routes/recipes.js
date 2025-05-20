@@ -117,10 +117,19 @@ router.get("/family-recipes/:id", async (req, res, next) => {
  */
 router.get("/:id", async (req, res, next) => {
   try {
+    const recipe_id = req.params.id;
     let recipe;
-    let recipe_id;
-     recipe = await recipes_utils.getRecipeDetails(req.params.id);
-     recipe_id = req.params.id;
+
+    
+    const isLocal = /^L\d+$/i.test(recipe_id);
+
+    if (isLocal) {
+      recipe = await recipes_utils.getLocalRecipeDetails(recipe_id);
+    } else {
+      recipe = await recipes_utils.getRecipeDetails(recipe_id);
+    }
+
+    
     if (req.session && req.session.user_id) {
       if (!Array.isArray(req.session.viewedRecipes)) {
         req.session.viewedRecipes = [];
@@ -129,10 +138,7 @@ router.get("/:id", async (req, res, next) => {
       if (!req.session.viewedRecipes.includes(recipe_id)) {
         req.session.viewedRecipes.push(recipe_id);
       }
-
-
-
-  }
+    }
 
     res.send(recipe);
 
@@ -140,7 +146,6 @@ router.get("/:id", async (req, res, next) => {
     next(error);
   }
 });
-
 
 
 
@@ -166,7 +171,7 @@ router.post("/", async(req,res,next) => {
         return res.status(401).send({message:"User not logged in" })
       }
       const user_id = req.session.user_id;
-      await recipes_utils.saveUserRecipe(req.body,user_id);
+      const newId = await recipes_utils.saveUserRecipe(req.body,user_id);
       res.status(201).send({message:res.status(201).send({ message: `Recipe with id ${newId} saved successfully` })
 })
       

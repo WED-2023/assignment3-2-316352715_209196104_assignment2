@@ -153,6 +153,19 @@ async function getRecipeDetails(recipe_id) {
     description
   };
 }
+async function getLocalRecipeDetails(recipe_id) {
+  const result = await DButils.execQuery(
+    `SELECT * FROM recipes WHERE recipe_id = ?`,
+    [recipe_id]
+  );
+
+  if (result.length === 0) {
+    throw { status: 404, message: "Recipe not found" };
+  }
+
+  return result[0];
+}
+
 
 async function getLocalRecipesPreview() {
   const dbRecipes = await DButils.execQuery("SELECT * FROM recipes");
@@ -178,11 +191,11 @@ async function saveUserRecipe(body, user_id) {
     isGlutenFree,
     ingredients, instructions, description
   } = body;
-  
+
   const result = await DButils.execQuery(`
-    SELECT id FROM recipes 
-    WHERE id LIKE 'L%' 
-    ORDER BY CAST(SUBSTRING(id, 2) AS UNSIGNED) DESC 
+    SELECT recipe_id FROM recipes 
+    WHERE recipe_id LIKE 'L%' 
+    ORDER BY CAST(SUBSTRING(recipe_id, 2) AS UNSIGNED) DESC 
     LIMIT 1
   `);
 
@@ -190,14 +203,17 @@ async function saveUserRecipe(body, user_id) {
   if (result.length === 0) {
     newId = "L1";
   } else {
-    const lastIdNum = parseInt(result[0].id.slice(1));
+    const lastIdNum = parseInt(result[0].recipe_id.slice(1));
     newId = `L${lastIdNum + 1}`;
   }
+  console.log("Saving recipe for user_id:", user_id);
+  console.log("New recipe ID:", newId);  
   await DButils.execQuery(
     `INSERT INTO recipes 
-    (user_id, name, img, time, popularity, isVegan, isVegetarian, isGlutenFree, ingredients, instructions, description)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    (recipe_id, user_id, name, img, time, popularity, isVegan, isVegetarian, isGlutenFree, ingredients, instructions, description)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
+      newId,
       user_id,
       name,
       img,
@@ -211,6 +227,7 @@ async function saveUserRecipe(body, user_id) {
       description
     ]
   );
+  return newId;
 }
 
 
@@ -304,3 +321,4 @@ exports.getFamilyRecipes = getFamilyRecipes;
 exports.searchSpoonacularRecipes = searchSpoonacularRecipes;
 exports.getRandomSpoonacularRecipesPreview = getRandomSpoonacularRecipesPreview;
 exports.getViewedRecipesPreview = getViewedRecipesPreview;
+exports.getLocalRecipeDetails = getLocalRecipeDetails;
