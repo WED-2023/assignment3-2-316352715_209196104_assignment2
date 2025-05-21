@@ -134,7 +134,7 @@ paths:
           name: id
           required: true
           schema:
-            type: integer
+            type: string
       responses:
         '200':
           description: A single family recipe
@@ -150,13 +150,16 @@ paths:
     get:
       tags: [users]
       summary: Get recipe by ID
+      description: |
+        Returns a recipe regardless of source (external, user-created, or family).
+        Supports IDs like numeric (`123`), local (`L1`), or family (`F1`).
       operationId: getRecipeById
       parameters:
         - in: path
           name: id
           required: true
           schema:
-            type: integer
+            type: string
       responses:
         '200':
           description: Recipe found
@@ -287,10 +290,10 @@ paths:
         '401':
           description: Unauthorized
 
-  /users/{id}/favorites:
+  /users/favorites:
     get:
       tags: [users]
-      summary: Get user's favorite recipes
+      summary: Get current online user's favorite recipes
       operationId: getUserFavorites
       parameters:
         - in: path
@@ -465,7 +468,7 @@ components:
         - instructions
       properties:
         recipe_id:
-          type: integer
+          type: string
           readOnly: true
         name:
           type: string
@@ -569,7 +572,7 @@ components:
         - story
       properties:
         recipe_id:
-          type: integer
+          type: string
         title:
           type: string
           example: Grandma’s Stuffed Peppers
@@ -606,7 +609,7 @@ components:
         - isGlutenFree
       properties:
         recipe_id:
-          type: integer
+          type: string
         name:
           type: string
           example: Vegan Pasta

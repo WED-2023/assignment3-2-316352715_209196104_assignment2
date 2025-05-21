@@ -172,8 +172,8 @@ router.post("/", async(req,res,next) => {
       }
       const user_id = req.session.user_id;
       const newId = await recipes_utils.saveUserRecipe(req.body,user_id);
-      res.status(201).send({message:res.status(201).send({ message: `Recipe with id ${newId} saved successfully` })
-})
+      res.status(201).send({ message: `Recipe with id ${newId} saved successfully` });
+
       
 }catch(err){
   next(err);
