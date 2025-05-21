@@ -88,9 +88,9 @@ router.get("/myRecipes/:id", async (req, res, next) => {
 
 router.get("/family-recipes", async (req, res, next) => {
   try {
-    if (!req.session || !req.session.user_id) {
-      return res.status(401).send({ message: "User not logged in" });
-    }
+    // if (!req.session || !req.session.user_id) {
+    //   return res.status(401).send({ message: "User not logged in" });
+    // }
     const recipes = await recipes_utils.getFamilyRecipes();
     res.status(200).send(recipes);
   } catch (error) {
