@@ -107,7 +107,24 @@ paths:
           description: Invalid input
         '409':
           description: Recipe already exists
-          
+  /recipes/myRecipes:
+    get:
+      tags: [users]
+      summary: Get current user's created recipes
+      operationId: getMyRecipes
+      security: 
+        - sessionAuth: []
+      responses:
+        '200':
+          description: List of created recipes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RecipePreview'
+        '401':
+          description: Unauthorized  
   /recipes/family-recipes:
     get:
       tags: [users]
@@ -189,26 +206,6 @@ paths:
                 items:
                   $ref: '#/components/schemas/UserSummary'
   
-  /users/{id}:
-    get:
-      tags: [users, developers]
-      summary: Get user by ID
-      operationId: getUserById
-      security: 
-        - sessionAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: User data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserSafe'
 
   /users/me:
     put:
