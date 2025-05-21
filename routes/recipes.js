@@ -3,18 +3,63 @@ var router = express.Router();
 const recipes_utils = require("./utils/recipes_utils");
 const { route } = require("./user");
 
+
 router.get("/", async (req, res, next) => {
   try {
-    const externalRecipes = await recipes_utils.getSpoonacularRecipesPreview(10, 0);
-    const localRecipes = await recipes_utils.getLocalRecipesPreview();
+    const queryParams = req.query;
 
+    let externalRecipes;
+    const limit = parseInt(queryParams.limit) || 10;
+    const sortBy = queryParams.sortBy; // 'popularity' or 'readyInMinutes'
+    const order = queryParams.order === "desc" ? "desc" : "asc";
+    const nonSearchParams = new Set(["limit", "sortBy", "order"]);
+    const searchParams = Object.keys(queryParams).filter(
+      (key) => !nonSearchParams.has(key)
+    );
+    const hasSearchParams = searchParams.length > 0;
+
+    if (hasSearchParams) {
+      if (req.session) {
+        req.session.lastSearch = queryParams;
+        console.log("session last search", req.session.lastSearch);
+      }
+      externalRecipes = await recipes_utils.searchSpoonacularRecipes(queryParams);
+    } else {
+      externalRecipes = await recipes_utils.getSpoonacularRecipesPreview(limit, 0);
+    }
+    
+    //const localRecipes = await recipes_utils.getLocalRecipesPreview();
     const allRecipes = [...localRecipes, ...externalRecipes];
-
+    if (sortBy && ["popularity", "readyInMinutes"].includes(sortBy)) {
+      allRecipes.sort((a, b) => {
+        if (order === "desc") return b[sortBy] - a[sortBy];
+        else return a[sortBy] - b[sortBy];
+      });
+    }
     res.status(200).send(allRecipes);
   } catch (err) {
     next(err);
   }
 });
+router.get("/random", async (req, res, next) => {
+  try {
+    const recipes = await recipes_utils.getRandomSpoonacularRecipesPreview(3);
+    res.status(200).send(recipes);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get("/viewed", async (req, res, next) => {
+  try {
+    const previews = await recipes_utils.getViewedRecipesPreview(req.session);
+    res.status(200).send(previews);
+  } catch (err) {
+    next(err);
+  }
+});
+
+
 router.get("/myRecipes", async (req, res, next) => {
   try {
     if (!req.session || !req.session.user_id) {
@@ -72,23 +117,36 @@ router.get("/family-recipes/:id", async (req, res, next) => {
  */
 router.get("/:id", async (req, res, next) => {
   try {
-    const recipe = await recipes_utils.getRecipeDetails(req.params.id);
-    const recipe_id = recipe.recipe_id;
-    res.send(recipe);
+    const recipe_id = req.params.id;
+    let recipe;
 
+    
+    const isLocal = /^L\d+$/i.test(recipe_id);
+
+    if (isLocal) {
+      recipe = await recipes_utils.getLocalRecipeDetails(recipe_id);
+    } else {
+      recipe = await recipes_utils.getRecipeDetails(recipe_id);
+    }
+
+    
     if (req.session && req.session.user_id) {
-      if (!req.session.viewedRecipes) {
+      if (!Array.isArray(req.session.viewedRecipes)) {
         req.session.viewedRecipes = [];
       }
+
       if (!req.session.viewedRecipes.includes(recipe_id)) {
         req.session.viewedRecipes.push(recipe_id);
       }
     }
 
+    res.send(recipe);
+
   } catch (error) {
     next(error);
   }
 });
+
 
 
 router.post("/", async(req,res,next) => {
@@ -113,8 +171,9 @@ router.post("/", async(req,res,next) => {
         return res.status(401).send({message:"User not logged in" })
       }
       const user_id = req.session.user_id;
-      await recipes_utils.saveUserRecipe(req.body,user_id)
-      res.status(201).send({message:"Recipe saved successfully"})
+      const newId = await recipes_utils.saveUserRecipe(req.body,user_id);
+      res.status(201).send({message:res.status(201).send({ message: `Recipe with id ${newId} saved successfully` })
+})
       
 }catch(err){
   next(err);
