@@ -199,8 +199,16 @@ async function getLocalRecipeDetails(recipe_id) {
 }
 
 
-async function getLocalRecipesPreview() {
-  const dbRecipes = await DButils.execQuery("SELECT * FROM recipes");
+async function getLocalRecipesPreview(name = null) {
+  let query = "SELECT * FROM recipes";
+  const params = [];
+
+  if (name) {
+    query += " WHERE name LIKE ?";
+    params.push(`%${name}%`);
+  }
+
+  const dbRecipes = await DButils.execQuery(query, params);
 
   return dbRecipes.map((r) => ({
     id: r.recipe_id,
@@ -213,6 +221,7 @@ async function getLocalRecipesPreview() {
     glutenFree: r.isGlutenFree === 1
   }));
 }
+
 
 
 
