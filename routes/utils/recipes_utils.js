@@ -131,28 +131,60 @@ async function getRecipeInformation(recipe_id) {
         }
     });
 }
-
 async function getRecipeDetails(recipe_id) {
-  const recipe_info = await getRecipeInformation(recipe_id);
-  const {
-    id, title, readyInMinutes, image, aggregateLikes,
-    vegan, vegetarian, glutenFree, ingredients, instructions, description
-  } = recipe_info.data;
+  const isLocal = /^L\d+$/i.test(recipe_id);
 
-  return {
-    id,
-    title,
-    readyInMinutes,
-    image,
-    popularity: aggregateLikes,
-    vegan,
-    vegetarian,
-    glutenFree,
-    ingredients,
-    instructions,
-    description
-  };
+  if (isLocal) {
+    const result = await DButils.execQuery(
+      `SELECT * FROM recipes WHERE recipe_id = ?`,
+      [recipe_id]
+    );
+
+    if (result.length === 0) {
+      throw { status: 404, message: "Local recipe not found" };
+    }
+
+    const r = result[0];
+    return {
+      id: r.recipe_id,
+      title: r.name,
+      image: r.img,
+      readyInMinutes: r.time,
+      popularity: r.popularity,
+      vegan: r.isVegan === 1,
+      vegetarian: r.isVegetarian === 1,
+      glutenFree: r.isGlutenFree === 1,
+      ingredients: (() => {
+        try {
+          return r.ingredients ? JSON.parse(r.ingredients) : [];
+        } catch {
+          return [r.ingredients];
+        }
+      })(),
+      instructions: r.instructions,
+      description: r.description
+    };
+  } else {
+    // Spoonacular recipe
+    const recipe_info = await getRecipeInformation(recipe_id);
+    const r = recipe_info.data;
+
+    return {
+      id: r.id,
+      title: r.title,
+      image: r.image,
+      readyInMinutes: r.readyInMinutes,
+      popularity: r.aggregateLikes || 0,
+      vegan: r.vegan,
+      vegetarian: r.vegetarian,
+      glutenFree: r.glutenFree,
+      ingredients: r.extendedIngredients?.map(i => i.original),
+      instructions: r.instructions,
+      description: r.summary
+    };
+  }
 }
+
 async function getLocalRecipeDetails(recipe_id) {
   const result = await DButils.execQuery(
     `SELECT * FROM recipes WHERE recipe_id = ?`,
@@ -209,24 +241,25 @@ async function saveUserRecipe(body, user_id) {
   console.log("Saving recipe for user_id:", user_id);
   console.log("New recipe ID:", newId);  
   await DButils.execQuery(
-    `INSERT INTO recipes 
-    (recipe_id, user_id, name, img, time, popularity, isVegan, isVegetarian, isGlutenFree, ingredients, instructions, description)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      newId,
-      user_id,
-      name,
-      img,
-      time,
-      popularity,
-      isVegan ? 1 : 0,
-      isVegetarian ? 1 : 0,
-      isGlutenFree ? 1 : 0,
-      JSON.stringify(ingredients),
-      instructions,
-      description
-    ]
-  );
+  `INSERT INTO recipes 
+  (recipe_id, user_id, name, img, time, popularity, isVegan, isVegetarian, isGlutenFree, ingredients, instructions, description)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  [
+    newId,
+    user_id,
+    name ?? null,
+    img ?? null,
+    time ?? null,
+    popularity ?? 0,
+    isVegan ? 1 : 0,
+    isVegetarian ? 1 : 0,
+    isGlutenFree ? 1 : 0,
+    JSON.stringify(ingredients ?? []),
+    instructions ?? null,
+    description ?? null
+  ]
+);
+
   return newId;
 }
 
@@ -247,10 +280,21 @@ async function getUserFamilyRecipes(user_id) {
 }
 
 async function getRecipesPreview(recipes_id_list) {
-  return Promise.all(
-    recipes_id_list.map((id) => getRecipeDetails(id))
-  );
+  const previews = [];
+
+  for (const id of recipes_id_list) {
+    try {
+      const recipe = await getRecipeDetails(id);
+      previews.push(recipe);
+    } catch (err) {
+      console.warn(`Failed to load recipe ${id}:`, err.message || err);
+    }
+  }
+
+  return previews;
 }
+
+
 async function getRandomSpoonacularRecipesPreview(count = 3) {
   const response = await axios.get(`${api_domain}/random`, {
     params: {

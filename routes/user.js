@@ -3,7 +3,6 @@ var router = express.Router();
 const DButils = require("./utils/DButils");
 const user_utils = require("./utils/user_utils");
 const recipe_utils = require("./utils/recipes_utils");
-const { requireLogin } = require("../routes/utils/middleware");
 
 
 /**
@@ -22,17 +21,29 @@ router.use((req, res, next) => {
 /**
  * This path gets body with recipeId and saves this recipe in the favorites list of the logged-in user
  */
-router.post('/users/:id/favorites', async (req, res, next) => {
+router.post('/favorites', async (req, res, next) => {
   try {
-    const user_id = parseInt(req.params.id);
-    const session_user_id = req.session.user_id;
+    const user_id = req.session.user_id;
+    const recipe_id = req.body.recipeId;
 
-    if (user_id !== session_user_id) {
+    if (!user_id) {
       return res.status(401).json({ message: "Unauthorized" });
     }
+    if (!recipe_id) {
+      return res.status(400).json({ message: "Missing recipeId in request body" });
+    }
 
-    const recipe_id = req.body.recipeId;
+    const existing = await DButils.execQuery(
+      `SELECT * FROM user_favorites WHERE user_id = ? AND recipe_id = ?`,
+      [user_id, recipe_id]
+    );
+
+    if (existing.length > 0) {
+      return res.status(409).json({ message: "Recipe is already in favorites" });
+    }
+
     await user_utils.markAsFavorite(user_id, recipe_id);
+
     res.status(200).send({ message: "The Recipe successfully saved as favorite" });
 
   } catch (error) {
@@ -40,20 +51,20 @@ router.post('/users/:id/favorites', async (req, res, next) => {
   }
 });
 
+
 /**
  * This path returns the favorite recipes saved by the logged-in user
  */
-router.get('/users/:id/favorites', async (req, res, next) => {
+router.get('/favorites', async (req, res, next) => {
   try {
-    const user_id = parseInt(req.params.id);
-    const session_user_id = req.session.user_id;
+    const user_id = req.session.user_id;
 
-    if (user_id !== session_user_id) {
+    if (!user_id) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
     const recipes_id = await user_utils.getFavoriteRecipes(user_id);
-    const recipes_id_array = recipes_id.map((element) => element.recipe_id); // extract ids
+    const recipes_id_array = recipes_id.map((element) => element.recipe_id);
     const results = await recipe_utils.getRecipesPreview(recipes_id_array);
     res.status(200).send(results);
 
@@ -61,6 +72,7 @@ router.get('/users/:id/favorites', async (req, res, next) => {
     next(error);
   }
 });
+
 
 
 router.get("/me", async (req, res, next) => {
@@ -90,13 +102,13 @@ router.put("/me", async (req, res, next) => {
     }
 
     const updatedUser = await DButils.execQuery(
-      `UPDATE users SET firstname = ?, lastname = ?, email = ?, country = ?, profilePic = ? WHERE id = ?`,
+      `UPDATE users SET firstname = ?, lastname = ?, email = ?, country = ?, profilepic = ? WHERE user_id = ?`,
       [
         req.body.firstname || user[0].firstname,
         req.body.lastname || user[0].lastname,
         req.body.email || user[0].email,
         req.body.country || user[0].country,
-        req.body.profilePic || user[0].profilePic,
+        req.body.profilepic || user[0].profilepic,
         req.session.user_id
       ]
     );
@@ -107,14 +119,14 @@ router.put("/me", async (req, res, next) => {
   }
 });
 
-router.get('/users/:id/recipes', async (req, res, next) => {
-  try {
-    const user_id = parseInt(req.params.id);
-    const session_user_id = req.session.user_id;
+router.get('/recipes', async (req, res, next) => {
+    try {
+    const user_id = req.session.user_id;
 
-    if (user_id !== session_user_id) {
+    if (!user_id) {
       return res.status(401).json({ message: "Unauthorized" });
     }
+
 
     const recipes = await recipe_utils.getUserCreatedRecipes(user_id);
     res.status(200).send(recipes);

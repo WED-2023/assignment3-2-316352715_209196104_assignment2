@@ -1,7 +1,2 @@
-node_modules/
 .env
-<<<<<<< Updated upstream
 .DS_Store
-=======
-node_modules/
->>>>>>> Stashed changes
