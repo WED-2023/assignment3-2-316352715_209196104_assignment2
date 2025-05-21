@@ -39,18 +39,18 @@ app.get("/",function(req,res)
 
 });
 
-// app.use(cors());
-// app.options("*", cors());
+app.use(cors());
+app.options("*", cors());
 
-// const corsConfig = {
-//   origin: true,
-//   credentials: true
-// };
+const corsConfig = {
+  origin: true,
+  credentials: true
+};
 
-// app.use(cors(corsConfig));
-// app.options("*", cors(corsConfig));
+app.use(cors(corsConfig));
+app.options("*", cors(corsConfig));
 
-var port = process.env.PORT || "80"; //local=3000 remote=80
+var port = process.env.PORT || "3000"; //local=3000 remote=80
 //#endregion
 const user = require("./routes/user");
 const recipes = require("./routes/recipes");
@@ -80,7 +80,7 @@ app.get("/alive", (req, res) => res.send("I'm alive"));
 // Routings
 app.use("/users", user);
 app.use("/recipes", recipes);
-app.use("/", auth);
+app.use("/auth", auth);
 
 
 
@@ -95,7 +95,7 @@ app.use(function (err, req, res, next) {
 
 
 
-const server = app.listen(port, () => {
+const server = app.listen(3000, () => {
   console.log(`Server listen on port ${port}`);
 });
 
