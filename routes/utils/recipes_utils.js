@@ -2,14 +2,21 @@ const axios = require("axios");
 const api_domain = "https://api.spoonacular.com/recipes";
 const DButils = require("./DButils");
 
-// Retrieve family recipes (all or specific)
+
+
+
+/**
+ * Get recipes list from spooncular response and extract the relevant recipe data for preview
+ * @param {*} recipes_info 
+ */
+
 async function getFamilyRecipes(recipe_id = null) {
   let recipes;
   if (!recipe_id) {
     recipes = await DButils.execQuery(`SELECT * FROM family_recipes`);
   } else {
     recipes = await DButils.execQuery(
-      `SELECT * FROM family_recipes WHERE recipe_id = ?`, [recipe_id]
+      `SELECT * FROM family_recipes WHERE recipe_id='${recipe_id}'`
     );
   }
 
@@ -27,7 +34,7 @@ async function getFamilyRecipes(recipe_id = null) {
         return r.ingredients ? JSON.parse(r.ingredients) : [];
       } catch (e) {
         console.warn(`Invalid JSON in ingredients for recipe_id=${r.recipe_id}:`, e.message);
-        return [];
+        return [r.ingredients]; // fallback – wrap raw string in array
       }
     })(),
     instructions: r.instructions,
@@ -35,18 +42,18 @@ async function getFamilyRecipes(recipe_id = null) {
     familyMember: r.passed_down_by,
     origin: r.originator,
     occasion: r.occasion,
-    story: r.story
+    story: r.story,
+    created_at: r.created_at
   }));
 }
 
-// Spoonacular preview (limited)
 async function getSpoonacularRecipesPreview(limit = 50, offset = 0) {
   const response = await axios.get(`${api_domain}/complexSearch`, {
     params: {
-      apiKey: process.env.spoonacular_apiKey,
+      apiKey: process.env.spooncular_apiKey,
       number: limit,
       offset: offset,
-      addRecipeInformation: false,
+      addRecipeInformation: false, 
     }
   });
 
@@ -57,23 +64,20 @@ async function getSpoonacularRecipesPreview(limit = 50, offset = 0) {
   }));
 }
 
-// Retrieve personal recipes for a user (all or specific)
-async function getUserRecipes(user_id, recipe_id = null) {
-  let recipes;
-  if (recipe_id) {
-    recipes = await DButils.execQuery(
-      `SELECT * FROM recipes WHERE user_id = ? AND recipe_id = ?`,
-      [user_id, recipe_id]
-    );
-  } else {
-    recipes = await DButils.execQuery(
-      `SELECT * FROM recipes WHERE user_id = ?`,
-      [user_id]
-    );
-  }
 
+async function getUserRecipes(user_id, recipe_id=null) {
+  let recipes;
+  if(recipe_id) {
+      recipes = await DButils.execQuery(
+      `SELECT * FROM PersonalRecipes WHERE user_id='${user_id}' AND id_recipe='${recipe_id}'`
+    );
+  }else {  
+    recipes = await DButils.execQuery(
+  `SELECT * FROM PersonalRecipes WHERE user_id='${user_id}'`
+);
+  }
   return recipes.map(r => ({
-    id: r.recipe_id,
+    id_recipe: r.recipe_id,
     title: r.name,
     image: r.img,
     readyInMinutes: r.time,
@@ -84,52 +88,37 @@ async function getUserRecipes(user_id, recipe_id = null) {
   }));
 }
 
-// Get full details from Spoonacular API
 async function getRecipeInformation(recipe_id) {
-  return await axios.get(`${api_domain}/${recipe_id}/information`, {
-    params: {
-      includeNutrition: false,
-      apiKey: process.env.spoonacular_apiKey
-    }
-  });
+    return await axios.get(`${api_domain}/${recipe_id}/information`, {
+        params: {
+            includeNutrition: false,
+            apiKey: process.env.spooncular_apiKey
+        }
+    });
 }
 
 async function getRecipeDetails(recipe_id) {
-  const recipe_info = await getRecipeInformation(recipe_id);
-  const {
-    id,
-    title,
-    readyInMinutes,
-    image,
-    aggregateLikes,
-    vegan,
-    vegetarian,
-    glutenFree,
-    extendedIngredients,
-    instructions,
-    summary
-  } = recipe_info.data;
+    let recipe_info = await getRecipeInformation(recipe_id);
+    let { id_recipe, title, readyInMinutes, image, aggregateLikes, vegan, vegetarian, glutenFree,ingredients,instructions,description } = recipe_info.data;
 
-  return {
-    id_recipe: id,
-    title,
-    readyInMinutes,
-    image,
-    popularity: aggregateLikes,
-    vegan,
-    vegetarian,
-    glutenFree,
-    ingredients: extendedIngredients.map(ing => ing.original),
-    instructions,
-    description: summary
-  };
+    return {
+        id_recipe: id_recipe,
+        title: title,
+        readyInMinutes: readyInMinutes,
+        image: image,
+        popularity: aggregateLikes,
+        vegan: vegan,
+        vegetarian: vegetarian,
+        glutenFree: glutenFree,
+        ingredients: ingredients,
+        instructions: instructions,
+        description: description,
+    }
 }
-
-// Local recipes preview
 async function getLocalRecipesPreview() {
-  const dbRecipes = await DButils.execQuery("SELECT * FROM recipes");
+  const dbRecipes = await DButils.execQuery("SELECT * FROM PersonalRecipes");
 
-  return dbRecipes.map(r => ({
+  return dbRecipes.map((r) => ({
     id: r.recipe_id,
     title: r.name,
     image: r.img,
@@ -141,47 +130,36 @@ async function getLocalRecipesPreview() {
   }));
 }
 
-// Save user recipe
+
 async function saveUserRecipe(body, user_id) {
   const {
-    img,
-    name,
-    time,
-    popularity,
-    isVegan,
-    isVegetarian,
+    img, name, time,
+    popularity, isVegan, isVegetarian,
     isGlutenFree,
-    ingredients,
-    instructions,
-    description
+    ingredients, instructions, description
   } = body;
 
-  
-const required = [name, img, time, popularity, ingredients, instructions, description];
-if (required.some(v => v === undefined)) {
-  throw new Error("Missing required fields");
-}
-
-
   await DButils.execQuery(
-    `INSERT INTO recipes 
+    `INSERT INTO PersonalRecipes 
     (user_id, name, img, time, popularity, isVegan, isVegetarian, isGlutenFree, ingredients, instructions, description)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      user_id,
-      name,
-      img,
-      time,
-      popularity,
-      isVegan ? 1 : 0,
-      isVegetarian ? 1 : 0,
-      isGlutenFree ? 1 : 0,
-      JSON.stringify(ingredients),
-      instructions,
-      description
-    ]
+    VALUES (
+      '${user_id}', 
+      '${name}', 
+      '${img}', 
+      '${time}', 
+      '${popularity}', 
+      '${isVegan ? 1 : 0}', 
+      '${isVegetarian ? 1 : 0}', 
+      '${isGlutenFree ? 1 : 0}', 
+      '${JSON.stringify(ingredients)}', 
+      '${instructions}', 
+      '${description}' 
+
+    )`
   );
 }
+
+
 
 async function getUserCreatedRecipes(user_id) {
   const result = await DButils.execQuery(
@@ -190,12 +168,12 @@ async function getUserCreatedRecipes(user_id) {
   return result;
 }
 
-// async function getUserFamilyRecipes(user_id) {
-//   const result = await DButils.execQuery(
-//     "SELECT * FROM family_recipes WHERE user_id = ?", [user_id]
-//   );
-//   return result;
-// }
+async function getUserFamilyRecipes(user_id) {
+  const result = await DButils.execQuery(
+    "SELECT * FROM family_recipes WHERE user_id = ?", [user_id]
+  );
+  return result;
+}
 
 async function getRecipesPreview(recipes_id_list) {
   return Promise.all(
@@ -205,16 +183,13 @@ async function getRecipesPreview(recipes_id_list) {
 
 
 
+exports.getRecipesPreview = getRecipesPreview;
+exports.getUserFamilyRecipes = getUserFamilyRecipes;
+exports.getUserCreatedRecipes = getUserCreatedRecipes;
+exports.getRecipeDetails = getRecipeDetails;
+exports.saveUserRecipe = saveUserRecipe;
+exports.getSpoonacularRecipesPreview = getSpoonacularRecipesPreview;
+exports.getLocalRecipesPreview = getLocalRecipesPreview;
+exports.getUserRecipes = getUserRecipes;
+exports.getFamilyRecipes = getFamilyRecipes;
 
-
-module.exports = {
-  getRecipesPreview,
-  // getUserFamilyRecipes,
-  getUserCreatedRecipes,
-  getRecipeDetails,
-  saveUserRecipe,
-  getSpoonacularRecipesPreview,
-  getLocalRecipesPreview,
-  getUserRecipes,
-  getFamilyRecipes
-};

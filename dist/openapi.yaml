@@ -41,12 +41,12 @@ tags:
     description: Calls available to regular users
 
 paths:
-  /recipes:
+    /recipes:
     get:
       tags: [users]
-      summary: Search recipes
+      summary: Search recipes (preview list)
       operationId: getRecipes
-      description: Search for recipes with optional filters
+      description: Search for recipes with optional filters and return preview data only
       parameters:
         - in: query
           name: name
@@ -77,16 +77,16 @@ paths:
             maximum: 50
       responses:
         '200':
-          description: List of matching recipes
+          description: List of recipe previews
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/RecipeStructure'
+                  $ref: '#/components/schemas/RecipePreview'
         '400':
           description: Bad input parameter
-          
+
     
     post:
       tags: [users]
@@ -99,7 +99,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RecipeStructure'
+              $ref: '#/components/schemas/RecipeFull'
       responses:
         '201':
           description: Recipe created successfully
@@ -163,7 +163,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RecipeStructure'
+                $ref: '#/components/schemas/RecipeFull'
         '400':
           description: Invalid ID
         '404':
@@ -451,7 +451,7 @@ components:
       name: session_id
 
   schemas:
-    RecipeStructure:
+    RecipeFull:
       type: object
       required:
         - img
@@ -592,3 +592,43 @@ components:
           type: string
           format: uri
           example: https://example.com/images/original-recipe.jpg
+
+    RecipePreview:
+      type: object
+      required:
+        - recipe_id
+        - name
+        - img
+        - time
+        - popularity
+        - isVegan
+        - isVegetarian
+        - isGlutenFree
+      properties:
+        recipe_id:
+          type: integer
+        name:
+          type: string
+          example: Vegan Pasta
+        img:
+          type: string
+          format: uri
+          example: https://example.com/images/pasta.jpg
+        time:
+          type: integer
+          description: Preparation time in minutes
+          example: 25
+        popularity:
+          type: number
+          format: float
+          example: 4.6
+        isVegan:
+          type: boolean
+          example: true
+        isVegetarian:
+          type: boolean
+          example: true
+        isGlutenFree:
+          type: boolean
+          example: false
+
