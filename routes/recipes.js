@@ -58,7 +58,7 @@ router.get("/random", async (req, res, next) => {
 
 router.get("/viewed", async (req, res, next) => {
   try {
-    const previews = await recipes_utils.getViewedRecipesPreview(req.session);
+    const previews = await recipes_utils.getViewedRecipesPreview(req.session.user_id);
     res.status(200).send(previews);
   } catch (err) {
     next(err);
@@ -135,16 +135,18 @@ router.get("/:id", async (req, res, next) => {
       recipe = await recipes_utils.getRecipeDetails(recipe_id);
     }
 
-    
-    if (req.session && req.session.user_id) {
-      if (!Array.isArray(req.session.viewedRecipes)) {
-        req.session.viewedRecipes = [];
-      }
-
-      if (!req.session.viewedRecipes.includes(recipe_id)) {
-        req.session.viewedRecipes.push(recipe_id);
-      }
+    if (req.session?.user_id) {
+      await recipes_utils.addToRecentlyViewed(req.session.user_id, recipe_id);
     }
+    // if (req.session && req.session.user_id) {
+    //   if (!Array.isArray(req.session.viewedRecipes)) {
+    //     req.session.viewedRecipes = [];
+    //   }
+
+    //   if (!req.session.viewedRecipes.includes(recipe_id)) {
+    //     req.session.viewedRecipes.push(recipe_id);
+    //   }
+    // }
 
     res.send(recipe);
 

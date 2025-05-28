@@ -1,3 +1,6 @@
+
+
+
 USE recipe_db;
 
 SET FOREIGN_KEY_CHECKS = 0;
@@ -7,6 +10,7 @@ DROP TABLE IF EXISTS favorites;
 DROP TABLE IF EXISTS family_recipes;
 DROP TABLE IF EXISTS recipes;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS recent_recipes;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
@@ -47,6 +51,13 @@ CREATE TABLE user_favorites (
   FOREIGN KEY (user_id) REFERENCES users(user_id),
   FOREIGN KEY (recipe_id) REFERENCES recipes(recipe_id)
 );
+CREATE TABLE recent_recipes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    recipe_id VARCHAR(20) NOT NULL,
+    viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, recipe_id)
+);
 
 -- Create family recipes table (inherits recipe_id from recipes)
 CREATE TABLE family_recipes (
@@ -71,50 +82,50 @@ CREATE TABLE family_recipes (
   FOREIGN KEY (recipe_id) REFERENCES recipes(recipe_id)
 );
 
-INSERT INTO family_recipes (
-  recipe_id,
-  originator,
-  occasion,
-  story,
-  passed_down_by,
-  original_family,
-  name,
-  img,
-  time,
-  popularity,
-  isVegan,
-  isVegetarian,
-  isGlutenFree,
-  ingredients,
-  instructions,
-  description,
-  release_date,
-  created_at
-) VALUES (
-  'F999',
-  'Lioz Shor',
-  'Midweek Cravings',
-  'Legend has it, this tofu once survived three freeze-thaw cycles to become the crispiest, most flavorful thing to ever touch a pan. Mom passed it down after a long night of watching MasterChef.',
-  'Mom',
-  'Middle Eastern Vegan Royalty',
-  'Sweet & Spicy Silan Tofu',
-  'https://example.com/images/lioz_tofu.jpg',
-  20,
-  95,
-  1,
-  1,
-  1,
-  JSON_ARRAY(
-    '1 block firm tofu, frozen, thawed and pressed',
-    '2 tbsp tapioca starch',
-    '1 tbsp silan (date syrup)',
-    '1 garlic clove, minced',
-    '1 tbsp soy sauce',
-    '1 tsp sweet chili sauce',
-    'Few drops lemon juice or rice vinegar'
-  ),
-  '1. Freeze and defrost tofu for maximum sponginess.\n2. Cut into cubes, coat with starch.\n3. Fry until golden and crisp.\n4. Mix sauce, pour over tofu and stir till sticky and shiny.',
-  'Crispy, sweet, tangy and slightly spicy — this dish is a perfect weeknight treat. It’s Lioz-approved, cruelty-free, and emotionally healing.',
-  NOW(),
-  NOW()
-);
+-- INSERT INTO family_recipes (
+--   recipe_id,
+--   originator,
+--   occasion,
+--   story,
+--   passed_down_by,
+--   original_family,
+--   name,
+--   img,
+--   time,
+--   popularity,
+--   isVegan,
+--   isVegetarian,
+--   isGlutenFree,
+--   ingredients,
+--   instructions,
+--   description,
+--   release_date,
+--   created_at
+-- ) VALUES (
+--   'F999',
+--   'Lioz Shor',
+--   'Midweek Cravings',
+--   'Legend has it, this tofu once survived three freeze-thaw cycles to become the crispiest, most flavorful thing to ever touch a pan. Mom passed it down after a long night of watching MasterChef.',
+--   'Mom',
+--   'Middle Eastern Vegan Royalty',
+--   'Sweet & Spicy Silan Tofu',
+--   'https://example.com/images/lioz_tofu.jpg',
+--   20,
+--   95,
+--   1,
+--   1,
+--   1,
+--   JSON_ARRAY(
+--     '1 block firm tofu, frozen, thawed and pressed',
+--     '2 tbsp tapioca starch',
+--     '1 tbsp silan (date syrup)',
+--     '1 garlic clove, minced',
+--     '1 tbsp soy sauce',
+--     '1 tsp sweet chili sauce',
+--     'Few drops lemon juice or rice vinegar'
+--   ),
+--   '1. Freeze and defrost tofu for maximum sponginess.\n2. Cut into cubes, coat with starch.\n3. Fry until golden and crisp.\n4. Mix sauce, pour over tofu and stir till sticky and shiny.',
+--   'Crispy, sweet, tangy and slightly spicy — this dish is a perfect weeknight treat. It’s Lioz-approved, cruelty-free, and emotionally healing.',
+--   NOW(),
+--   NOW()
+-- );
