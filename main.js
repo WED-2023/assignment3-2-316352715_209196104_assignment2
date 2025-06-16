@@ -32,9 +32,9 @@ app.use(express.static(path.join(__dirname, '../assignment3_3-frontend-main/dist
 app.get("/",function(req,res)
 { 
   remote: 
-  res.sendFile(path.join(__dirname, '../assignment3_3-frontend-main/dist/index.html'));
+  // res.sendFile(path.join(__dirname, '../assignment3_3-frontend-main/dist/index.html'));
   //local:
-  // res.sendFile(__dirname+"/index.html");
+  res.sendFile(__dirname+"/index.html");
 
 });
 
@@ -89,14 +89,14 @@ app.use(function (err, req, res, next) {
 
 
 
-// const server = app.listen(3000, () => {
-//   console.log(`Server listen on port ${port}`);
-// });
+const server = app.listen(3000, () => {
+  console.log(`Server listen on port ${port}`);
+});
 
-// process.on("SIGINT", function () {
-//   if (server) {
-//     server.close(() => console.log("server closed"));
-//   }
-//   process.exit();
-// });
+process.on("SIGINT", function () {
+  if (server) {
+    server.close(() => console.log("server closed"));
+  }
+  process.exit();
+});
 module.exports = app;

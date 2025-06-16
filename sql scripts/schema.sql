@@ -44,9 +44,9 @@ CREATE TABLE user_favorites (
   user_id INT NOT NULL,
   recipe_id VARCHAR(20) NOT NULL,
   PRIMARY KEY (user_id, recipe_id),
-  FOREIGN KEY (user_id) REFERENCES users(user_id),
-  FOREIGN KEY (recipe_id) REFERENCES recipes(recipe_id)
+  FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
+
 
 -- Create family recipes table (inherits recipe_id from recipes)
 CREATE TABLE family_recipes (
@@ -56,6 +56,7 @@ CREATE TABLE family_recipes (
   story TEXT,
   passed_down_by VARCHAR(100),
   original_note_image VARCHAR(255),
+  original_family VARCHAR(255), -- ⬅️ זה התיקון
   name VARCHAR(255),
   img VARCHAR(255),
   time INT,
@@ -70,6 +71,7 @@ CREATE TABLE family_recipes (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (recipe_id) REFERENCES recipes(recipe_id)
 );
+
 
 INSERT INTO family_recipes (
   recipe_id,
@@ -88,7 +90,7 @@ INSERT INTO family_recipes (
   ingredients,
   instructions,
   description,
-  release_date,
+  releaseDate,
   created_at
 ) VALUES (
   'F999',
