@@ -3,6 +3,7 @@ var router = express.Router();
 const MySql = require("../routes/utils/MySql");
 const DButils = require("../routes/utils/DButils");
 const bcrypt = require("bcryptjs");
+require('dotenv').config(); 
 const { body, validationResult } = require('express-validator');
 
 
@@ -82,8 +83,13 @@ await DButils.execQuery(
 
     res.status(201).send({ message: "user created", success: true });
   } catch (error) {
-    next(error);
-  }
+  console.error("REGISTER ERROR:", error);
+  res.status(error.status || 500).json({
+    message: error.message || "Unknown internal error",
+    success: false
+  });
+}
+
 });
 
 router.post("/login", async (req, res, next) => {

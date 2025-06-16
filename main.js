@@ -24,18 +24,16 @@ app.use(
   })
 );
 app.use(express.urlencoded({ extended: false })); // parse application/x-www-form-urlencoded
-app.use(express.static(path.join(__dirname, "public"))); //To serve static files such as images, CSS files, and JavaScript files
+// app.use(express.static(path.join(__dirname, "public"))); //To serve static files such as images, CSS files, and JavaScript files
 //local:
 // app.use(express.static(path.join(__dirname, "dist")));
 //remote:
 app.use(express.static(path.join(__dirname, '../assignment3_3-frontend-main/dist')));
 app.get("/",function(req,res)
 { 
-  remote: 
   // res.sendFile(path.join(__dirname, '../assignment3_3-frontend-main/dist/index.html'));
   //local:
   res.sendFile(__dirname+"/index.html");
-
 });
 
 

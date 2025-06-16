@@ -222,6 +222,31 @@ async function getLocalRecipesPreview(name = null) {
   }));
 }
 
+async function addToRecentlyViewed(user_id, recipe_id) {
+  // Delete duplicate entry
+  await DButils.execQuery(
+    "DELETE FROM recent_recipes WHERE user_id = ? AND recipe_id = ?",
+    [user_id, recipe_id]
+  );
+
+  // Get existing entries for this user
+  const existing = await DButils.execQuery(
+    "SELECT id FROM recent_recipes WHERE user_id = ? ORDER BY viewed_at ASC",
+    [user_id]
+  );
+
+  // If already 3 entries, delete the oldest
+  if (existing.length >= 3) {
+    const oldestId = existing[0].id;
+    await DButils.execQuery("DELETE FROM recent_recipes WHERE id = ?", [oldestId]);
+  }
+
+  // Insert new entry
+  await DButils.execQuery(
+    "INSERT INTO recent_recipes (user_id, recipe_id) VALUES (?, ?)",
+    [user_id, recipe_id]
+  );
+}
 
 
 
@@ -323,42 +348,30 @@ async function getRandomSpoonacularRecipesPreview(count = 3) {
     glutenFree: r.glutenFree
   }));
 }
-async function getViewedRecipesPreview(session) {
-  if (!session || !session.viewedRecipes || session.viewedRecipes.length === 0) {
-    return [];
-  }
+async function getViewedRecipesPreview(user_id) {
+  const result = await DButils.execQuery(
+    "SELECT recipe_id FROM recent_recipes WHERE user_id = ? ORDER BY viewed_at DESC LIMIT 3",
+    [user_id]
+  );
 
-  const recipeIds = session.viewedRecipes.slice(-3); 
-  const previews = [];
+  const recipeIds = result.map(r => r.recipe_id);
+  const fullDetails = [];
 
   for (const id of recipeIds) {
     try {
-      const res = await axios.get(`${api_domain}/${id}/information`, {
-        params: {
-          apiKey: process.env.spooncular_apiKey,
-          includeNutrition: false
-        }
-      });
-
-      const r = res.data;
-
-      previews.push({
-        id: r.id,
-        title: r.title,
-        image: r.image,
-        readyInMinutes: r.readyInMinutes,
-        popularity: r.aggregateLikes || 0,
-        vegan: r.vegan,
-        vegetarian: r.vegetarian,
-        glutenFree: r.glutenFree
-      });
+      const recipe = await getRecipeDetails(id);
+      fullDetails.push(recipe);
     } catch (err) {
-      console.warn(`Failed to fetch recipe ID ${id}:`, err.response?.status || err.message);
+      console.warn(`Failed to load recipe ${id}:`, err.message || err);
     }
   }
 
-  return previews;
+  return fullDetails;
 }
+
+
+
+
 
 
 
@@ -375,3 +388,4 @@ exports.searchSpoonacularRecipes = searchSpoonacularRecipes;
 exports.getRandomSpoonacularRecipesPreview = getRandomSpoonacularRecipesPreview;
 exports.getViewedRecipesPreview = getViewedRecipesPreview;
 exports.getLocalRecipeDetails = getLocalRecipeDetails;
+exports.addToRecentlyViewed = addToRecentlyViewed;
