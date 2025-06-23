@@ -96,30 +96,31 @@ router.post(
   }
 );
 
-// POST /auth/login
+// P// POST /auth/login
 router.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    const users = await DButils.execQuery("SELECT username FROM users");
-    if (!users.find((x) => x.username === username)) {
+    // שליפה מלאה של המשתמש
+    const users = await DButils.execQuery("SELECT * FROM users WHERE username = ?", [username]);
+    if (users.length === 0) {
       return res.status(401).json({
         success: false,
         message: "Username or password incorrect",
       });
     }
 
-    const user = (
-      await DButils.execQuery("SELECT * FROM users WHERE username = ?", [username])
-    )[0];
+    const user = users[0];
 
-    if (!user || !bcrypt.compareSync(password, user.password)) {
+    // השוואת סיסמה
+    if (!bcrypt.compareSync(password, user.password)) {
       return res.status(401).json({
         success: false,
         message: "Username or password incorrect",
       });
     }
 
+    // ✅ יצירת סשן
     req.session.user_id = user.user_id;
     console.log("session user_id login: " + req.session.user_id);
 
@@ -135,6 +136,7 @@ router.post("/login", async (req, res) => {
     });
   }
 });
+
 
 // POST /auth/logout
 router.post("/logout", (req, res) => {
