@@ -20,7 +20,6 @@ app.use(
     cookie: {
       httpOnly: false,
         secure: false
-
     }
     //the session will be extended by activeDuration milliseconds
   })
