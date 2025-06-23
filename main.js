@@ -19,6 +19,8 @@ app.use(
     activeDuration: 1000 * 60 * 5, // if expiresIn < activeDuration,
     cookie: {
       httpOnly: false,
+        secure: false
+
     }
     //the session will be extended by activeDuration milliseconds
   })
@@ -29,12 +31,16 @@ app.use(express.urlencoded({ extended: false })); // parse application/x-www-for
 // app.use(express.static(path.join(__dirname, "dist")));
 //remote:
 app.use(express.static(path.join(__dirname, '../assignment3_3-frontend-main/dist')));
-app.get("/",function(req,res)
-{ 
-  // res.sendFile(path.join(__dirname, '../assignment3_3-frontend-main/dist/index.html'));
-  //local:
-  res.sendFile(__dirname+"/index.html");
+// app.get("/",function(req,res)
+// { 
+//   // res.sendFile(path.join(__dirname, '../assignment3_3-frontend-main/dist/index.html'));
+//   //local:
+//   res.sendFile(__dirname+"/index.html");
+// });
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, '../assignment3_3-frontend-main/dist/index.html'));
 });
+
 
 
 const corsConfig = {
@@ -47,7 +53,7 @@ app.options("*", cors(corsConfig));
 
 var port = process.env.PORT || "3000"; //local=3000 remote=80
 //#endregion
-const user = require("./routes/user");
+const user = require("./routes/users.js");
 const recipes = require("./routes/recipes");
 const auth = require("./routes/auth");
 
