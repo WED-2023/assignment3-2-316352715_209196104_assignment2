@@ -31,14 +31,13 @@ app.use(express.urlencoded({ extended: false })); // parse application/x-www-for
 // app.use(express.static(path.join(__dirname, "dist")));
 //remote:
 app.use(express.static(path.join(__dirname, '../assignment3_3-frontend-main/dist')));
-// app.get("/",function(req,res)
-// { 
-//   // res.sendFile(path.join(__dirname, '../assignment3_3-frontend-main/dist/index.html'));
-//   //local:
-//   res.sendFile(__dirname+"/index.html");
-// });
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, '../assignment3_3-frontend-main/dist/index.html'));
+app.get("/",function(req,res)
+{ 
+  remote: 
+  // res.sendFile(path.join(__dirname, '../assignment3_3-frontend-main/dist/index.html'));
+  //local:
+  res.sendFile(__dirname+"/index.html");
+
 });
 
 
