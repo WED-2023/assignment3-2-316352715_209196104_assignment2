@@ -29,10 +29,7 @@ router.post(
     body('password')
       .matches(/^(?=.*[0-9])(?=.*[^A-Za-z0-9]).{5,10}$/)
       .withMessage('Password must be 5–10 characters, include a number and special char'),
-    body('profilepic')
-      .optional()
-      .isURL()
-      .withMessage('Profile picture must be a valid URL'),
+  
   ], async (req, res, next) => {
 
     //check vaildation results
@@ -54,7 +51,6 @@ router.post(
       country: req.body.country,
       password: req.body.password,
       email: req.body.email,
-      profilepic: req.body.profilepic ?? null
     }
 
     let userExists = await DButils.execQuery("SELECT username FROM users WHERE username = ?", [user_details.username]);
@@ -69,15 +65,14 @@ router.post(
     );
 
 await DButils.execQuery(
-  `INSERT INTO users (username, firstname, lastname, country, password, email, profilepic) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+  `INSERT INTO users (username, firstname, lastname, country, password, email) VALUES (?, ?, ?, ?, ?, ?, ?)`,
   [
     user_details.username,
     user_details.firstname,
     user_details.lastname,
     user_details.country,
     hash_password,
-    user_details.email,
-    user_details.profilepic
+    user_details.email
   ]
 );
 

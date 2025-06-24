@@ -1,6 +1,3 @@
-
-
-
 USE recipe_db;
 
 SET FOREIGN_KEY_CHECKS = 0;
@@ -11,6 +8,7 @@ DROP TABLE IF EXISTS family_recipes;
 DROP TABLE IF EXISTS recipes;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS recent_recipes;
+
 
 SET FOREIGN_KEY_CHECKS = 1;
 
@@ -67,7 +65,7 @@ CREATE TABLE family_recipes (
   story TEXT,
   passed_down_by VARCHAR(100),
   original_note_image VARCHAR(255),
-  original_family VARCHAR(255), -- ⬅️ זה התיקון
+  original_family VARCHAR(255),
   name VARCHAR(255),
   img VARCHAR(255),
   time INT,
@@ -79,9 +77,9 @@ CREATE TABLE family_recipes (
   instructions TEXT,
   description TEXT,
   releaseDate DATE,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (recipe_id) REFERENCES recipes(recipe_id)
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
 
 
 INSERT INTO family_recipes (
