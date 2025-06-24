@@ -44,7 +44,6 @@ CREATE TABLE user_favorites (
   recipe_id VARCHAR(20) NOT NULL,
   PRIMARY KEY (user_id, recipe_id),
   FOREIGN KEY (user_id) REFERENCES users(user_id)
-  -- intentionally no foreign key on recipe_id
 );
 
 
@@ -70,7 +69,6 @@ CREATE TABLE family_recipes (
   releaseDate DATE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
 
 
 INSERT INTO family_recipes (

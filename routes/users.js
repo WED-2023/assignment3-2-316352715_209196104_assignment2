@@ -7,6 +7,7 @@ const { requireLogin } = require("./utils/middleware"); //
 
 router.get("/me", async (req, res, next) => {
   try {
+    res.setHeader("Cache-Control", "no-store"); // 👈 קריטי!
     if (!req.session?.user_id) {
       return res.status(401).json({ message: "Not authenticated" });
     }

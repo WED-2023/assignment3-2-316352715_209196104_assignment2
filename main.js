@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const path = require("path");
 const logger = require("morgan");
-const session = require("client-sessions");
+const session = require("express-session");
 const DButils = require("./routes/utils/DButils");
 const cors = require("cors");
 
@@ -15,27 +15,27 @@ app.use(express.urlencoded({ extended: false }));
 
 // Cookie/session setup
 const isProduction = process.env.NODE_ENV === "production";
+
 app.use(
   session({
-    cookieName: "session",
     secret: "template",
-    duration: 24 * 60 * 60 * 1000,
-    activeDuration: 1000 * 60 * 5,
+    resave: false,
+    saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true, 
-      sameSite: "lax",
+      secure: isProduction,  
+      sameSite: isProduction ? "none" : "lax", 
     },
   })
 );
 
-// CORS setup
 const corsConfig = {
-  origin: "https://wtfood.cs.bgu.ac.il",
+  origin: ["https://wtfood.cs.bgu.ac.il", "http://localhost:8080"],
   credentials: true,
 };
 app.use(cors(corsConfig));
 app.options("*", cors(corsConfig));
+
 
 // Static files
 app.use(express.static(path.join(__dirname, '../assignment3_3-frontend-main/dist')));

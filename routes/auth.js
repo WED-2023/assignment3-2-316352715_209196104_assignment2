@@ -140,12 +140,15 @@ router.post("/login", async (req, res) => {
 
 // POST /auth/logout
 router.post("/logout", (req, res) => {
-  console.log("session user_id Logout: " + req.session.user_id);
-  req.session.reset();
-  res.status(200).json({
-    success: true,
-    message: "Logout succeeded",
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).send({ message: "Logout failed" });
+    }
+
+    res.clearCookie("connect.sid");
+    res.status(200).send({ message: "Logout successful" });
   });
 });
+
 
 module.exports = router;
