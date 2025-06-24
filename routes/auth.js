@@ -1,126 +1,151 @@
-var express = require("express");
-var router = express.Router();
-const MySql = require("../routes/utils/MySql");
-const DButils = require("../routes/utils/DButils");
+const express = require("express");
+const router = express.Router();
 const bcrypt = require("bcryptjs");
-require('dotenv').config(); 
-const { body, validationResult } = require('express-validator');
+const { body, validationResult } = require("express-validator");
+const DButils = require("../routes/utils/DButils");
+require("dotenv").config();
 
-
-//post/auth/register
+// POST /auth/register
 router.post(
-  '/register',
+  "/register",
   [
-    body('username')
+    body("username")
       .isLength({ min: 3, max: 8 })
-      .withMessage('Username must be between 3 and 8 characters'),
-    body('firstname')
-      .notEmpty()
-      .withMessage('First name is required'),
-    body('lastname')
-      .notEmpty()
-      .withMessage('Last name is required'),
-    body('country')
-      .notEmpty()
-      .withMessage('Country is required'),
-    body('email')
-      .isEmail()
-      .withMessage('Email is invalid'),
-    body('password')
+      .withMessage("Username must be between 3 and 8 characters"),
+    body("firstname").notEmpty().withMessage("First name is required"),
+    body("lastname").notEmpty().withMessage("Last name is required"),
+    body("country").notEmpty().withMessage("Country is required"),
+    body("email").isEmail().withMessage("Email is invalid"),
+    body("password")
       .matches(/^(?=.*[0-9])(?=.*[^A-Za-z0-9]).{5,10}$/)
-      .withMessage('Password must be 5–10 characters, include a number and special char'),
-  
-  ], async (req, res, next) => {
-
-    //check vaildation results
+      .withMessage(
+        "Password must be 5–10 characters, include a number and special char"
+      ),
+  ],
+  async (req, res) => {
+    // validate input
     const errors = validationResult(req);
-        if (!errors.isEmpty()) {
+    if (!errors.isEmpty()) {
       return res.status(400).json({
-        message: 'Validation failed',
+        success: false,
+        message: "Validation failed",
         errors: errors.array(),
       });
     }
-  try {
-    // parameters exists
-    // valid parameters
-    // username exists
-    let user_details = {
-      username: req.body.username,
-      firstname: req.body.firstname,
-      lastname: req.body.lastname,
-      country: req.body.country,
-      password: req.body.password,
-      email: req.body.email,
-    }
 
-    let userExists = await DButils.execQuery("SELECT username FROM users WHERE username = ?", [user_details.username]);
-    if (userExists.length > 0) {
-        throw { status: 409, message: "Username taken" };
+    try {
+      const { username, firstname, lastname, country, password, email } = req.body;
+
+      // check for duplicate username
+      const userExists = await DButils.execQuery(
+        "SELECT username FROM users WHERE username = ?",
+        [username]
+      );
+      if (userExists.length > 0) {
+        return res.status(409).json({
+          success: false,
+          message: "Username already taken",
+        });
       }
 
-    // add the new username
-    let hash_password = bcrypt.hashSync(
-      user_details.password,
-      parseInt(process.env.bcrypt_saltRounds)
-    );
+      // hash password
+      const hashedPassword = bcrypt.hashSync(
+        password,
+        parseInt(process.env.bcrypt_saltRounds)
+      );
 
-await DButils.execQuery(
-  `INSERT INTO users (username, firstname, lastname, country, password, email) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-  [
-    user_details.username,
-    user_details.firstname,
-    user_details.lastname,
-    user_details.country,
-    hash_password,
-    user_details.email
-  ]
+      // insert into DB
+      await DButils.execQuery(
+        `INSERT INTO users (username, firstname, lastname, country, password, email) VALUES (?, ?, ?, ?, ?, ?)`,
+        [username, firstname, lastname, country, hashedPassword, email]
+      );
+
+      res.status(201).json({
+        success: true,
+        message: "User created successfully",
+      });
+    } catch (error) {
+      console.error("REGISTER ERROR:", error);
+
+      // handle duplicate entry (unique constraints)
+      if (error.code === "ER_DUP_ENTRY") {
+        if (error.sqlMessage?.includes("users.email")) {
+          return res.status(409).json({
+            success: false,
+            message: "Email already in use",
+          });
+        }
+        if (error.sqlMessage?.includes("users.username")) {
+          return res.status(409).json({
+            success: false,
+            message: "Username already taken",
+          });
+        }
+        return res.status(409).json({
+          success: false,
+          message: "Duplicate entry",
+        });
+      }
+
+      // default internal error
+      res.status(500).json({
+        success: false,
+        message: error.message || "Unknown internal error",
+      });
+    }
+  }
 );
 
-    res.status(201).send({ message: "user created", success: true });
-  } catch (error) {
-  console.error("REGISTER ERROR:", error);
-  res.status(error.status || 500).json({
-    message: error.message || "Unknown internal error",
-    success: false
-  });
-}
-
-});
-
-router.post("/login", async (req, res, next) => {
+// P// POST /auth/login
+router.post("/login", async (req, res) => {
   try {
-    // check that username exists
-    const users = await DButils.execQuery("SELECT username FROM users");
-    if (!users.find((x) => x.username === req.body.username))
-      throw { status: 401, message: "Username or Password incorrect" };
+    const { username, password } = req.body;
 
-    // check that the password is correct
-    const user = (
-      await DButils.execQuery(
-              `SELECT * FROM users WHERE username = ?`,
-          [req.body.username]
-      )
-    )[0];
+    // שליפה מלאה של המשתמש
+    const users = await DButils.execQuery("SELECT * FROM users WHERE username = ?", [username]);
+    if (users.length === 0) {
+      return res.status(401).json({
+        success: false,
+        message: "Username or password incorrect",
+      });
+    }
 
-if (!user || !bcrypt.compareSync(req.body.password, user.password)) {
-  throw { status: 401, message: "Username or Password incorrect" };
-}
+    const user = users[0];
 
-    // Set cookie
+    // השוואת סיסמה
+    if (!bcrypt.compareSync(password, user.password)) {
+      return res.status(401).json({
+        success: false,
+        message: "Username or password incorrect",
+      });
+    }
+
+    // ✅ יצירת סשן
     req.session.user_id = user.user_id;
     console.log("session user_id login: " + req.session.user_id);
 
-    // return cookie
-    res.status(200).send({ message: "login succeeded " , success: true });
+    res.status(200).json({
+      success: true,
+      message: "Login succeeded",
+    });
   } catch (error) {
-    next(error);
+    console.error("LOGIN ERROR:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Unknown internal error",
+    });
   }
 });
 
-router.post("/logout", function (req, res) {
+
+// POST /auth/logout
+router.post("/logout", (req, res) => {
   console.log("session user_id Logout: " + req.session.user_id);
-  req.session.reset(); // reset the session info --> send cookie when  req.session == undefined!!
-  res.send({ success: true, message: "logout succeeded" });
+  req.session.reset();
+  res.status(200).json({
+    success: true,
+    message: "Logout succeeded",
+  });
 });
 
 module.exports = router;

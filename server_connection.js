@@ -1,7 +1,9 @@
 var path = require("path");
+require('dotenv').config(); // בראש הקובץ, לפני השימוש ב-main
 var app = require('./main');
 var https = require('https');
 var fs = require('fs');
+
 
 var httpsOptions = {
   key: fs.readFileSync(path.join(__dirname, "privkey.pem")),//server.key

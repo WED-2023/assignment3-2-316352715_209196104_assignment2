@@ -7,7 +7,6 @@ DROP TABLE IF EXISTS favorites;
 DROP TABLE IF EXISTS family_recipes;
 DROP TABLE IF EXISTS recipes;
 DROP TABLE IF EXISTS users;
-DROP TABLE IF EXISTS recent_recipes;
 
 
 SET FOREIGN_KEY_CHECKS = 1;
@@ -20,7 +19,6 @@ CREATE TABLE users (
   firstname VARCHAR(255),
   lastname VARCHAR(255),
   country VARCHAR(100),
-  profilepic VARCHAR(255),
   email VARCHAR(255) UNIQUE
 );
 
@@ -47,13 +45,7 @@ CREATE TABLE user_favorites (
   recipe_id VARCHAR(20) NOT NULL,
   PRIMARY KEY (user_id, recipe_id),
   FOREIGN KEY (user_id) REFERENCES users(user_id)
-);
-CREATE TABLE recent_recipes (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    recipe_id VARCHAR(20) NOT NULL,
-    viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(user_id, recipe_id)
+  -- intentionally no foreign key on recipe_id
 );
 
 

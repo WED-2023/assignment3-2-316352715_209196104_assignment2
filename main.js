@@ -1,100 +1,85 @@
 require("dotenv").config();
-//#region express configures
-var express = require("express");
-var path = require("path");
-var logger = require("morgan");
+const express = require("express");
+const path = require("path");
+const logger = require("morgan");
 const session = require("client-sessions");
 const DButils = require("./routes/utils/DButils");
-var cors = require('cors')
+const cors = require("cors");
 
-var app = express();
-app.use(logger("dev")); //logger
-app.use(express.json()); // parse application/json
+const app = express();
+
+// Log requests
+app.use(logger("dev"));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+// Cookie/session setup
+const isProduction = process.env.NODE_ENV === "production";
 app.use(
   session({
-    cookieName: "session", // the cookie key name
-    //secret: process.env.COOKIE_SECRET, // the encryption key
-    secret: "template", // the encryption key
-    duration: 24 * 60 * 60 * 1000, // expired after 20 sec
-    activeDuration: 1000 * 60 * 5, // if expiresIn < activeDuration,
+    cookieName: "session",
+    secret: "template",
+    duration: 24 * 60 * 60 * 1000,
+    activeDuration: 1000 * 60 * 5,
     cookie: {
-      httpOnly: false,
-    }
-    //the session will be extended by activeDuration milliseconds
+      httpOnly: true,
+      secure: true, 
+      sameSite: "lax",
+    },
   })
 );
-app.use(express.urlencoded({ extended: false })); // parse application/x-www-form-urlencoded
-// app.use(express.static(path.join(__dirname, "public"))); //To serve static files such as images, CSS files, and JavaScript files
-//local:
-// app.use(express.static(path.join(__dirname, "dist")));
-//remote:
-app.use(express.static(path.join(__dirname, '../assignment3_3-frontend-main/dist')));
-app.get("/",function(req,res)
-{ 
-  // res.sendFile(path.join(__dirname, '../assignment3_3-frontend-main/dist/index.html'));
-  //local:
-  res.sendFile(__dirname+"/index.html");
-});
 
-
+// CORS setup
 const corsConfig = {
-  origin: true,
-  credentials: true
+  origin: "https://wtfood.cs.bgu.ac.il",
+  credentials: true,
 };
-
 app.use(cors(corsConfig));
 app.options("*", cors(corsConfig));
 
-var port = process.env.PORT || "3000"; //local=3000 remote=80
-//#endregion
-const user = require("./routes/user");
-const recipes = require("./routes/recipes");
-const auth = require("./routes/auth");
+// Static files
+app.use(express.static(path.join(__dirname, '../assignment3_3-frontend-main/dist')));
 
-
-//#region cookie middleware
-app.use(function (req, res, next) {
-  if (req.session && req.session.user_id) {
-    DButils.execQuery("SELECT user_id FROM users")
-      .then((users) => {
-        if (users.find((x) => x.user_id === req.session.user_id)) {
-          req.user_id = req.session.user_id;
-        }
-        next();
-      })
-      .catch((error) => next());
-  } else {
+// Cookie middleware
+app.use(async (req, res, next) => {
+  try {
+    if (req.session?.user_id) {
+      const users = await DButils.execQuery("SELECT user_id FROM users");
+      if (users.find((x) => x.user_id === req.session.user_id)) {
+        req.user_id = req.session.user_id;
+      }
+    }
+    next();
+  } catch {
     next();
   }
 });
-//#endregion
 
-// ----> For cheking that our server is alive
+// Routes
 app.get("/alive", (req, res) => res.send("I'm alive"));
+app.use("/users", require("./routes/users.js"));
+app.use("/recipes", require("./routes/recipes"));
+app.use("/auth", require("./routes/auth"));
 
-// Routings
-app.use("/users", user);
-app.use("/recipes", recipes);
-app.use("/auth", auth);
+// Frontend fallback
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, '../assignment3_3-frontend-main/dist/index.html'));
+});
 
-
-
-// Default router
-app.use(function (err, req, res, next) {
+// Error handler
+app.use((err, req, res, next) => {
   console.error(err);
   res.status(err.status || 500).send({ message: err.message, success: false });
 });
 
+// // Start server
+// const port = process.env.PORT || 3000;
+// const server = app.listen(port, () => {
+//   console.log(`Server listening on port ${port}`);
+// });
 
-
-const server = app.listen(3000, () => {
-  console.log(`Server listen on port ${port}`);
-});
-
-process.on("SIGINT", function () {
-  if (server) {
-    server.close(() => console.log("server closed"));
-  }
-  process.exit();
-});
+// process.on("SIGINT", () => {
+//   server && server.close(() => console.log("Server closed"));
+//   process.exit();
+// });
 module.exports = app;

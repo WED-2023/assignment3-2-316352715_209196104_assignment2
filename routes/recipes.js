@@ -1,7 +1,7 @@
 var express = require("express");
 var router = express.Router();
 const recipes_utils = require("./utils/recipes_utils");
-const { route } = require("./user");
+const { route } = require("./users.js");
 
 
 router.get("/", async (req, res, next) => {
