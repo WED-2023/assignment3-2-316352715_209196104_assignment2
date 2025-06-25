@@ -199,28 +199,28 @@ async function getLocalRecipeDetails(recipe_id) {
 }
 
 
-async function getLocalRecipesPreview(name = null) {
-  let query = "SELECT * FROM recipes";
-  const params = [];
+// async function getLocalRecipesPreview(name = null) {
+//   let query = "SELECT * FROM recipes";
+//   const params = [];
 
-  if (name) {
-    query += " WHERE name LIKE ?";
-    params.push(`%${name}%`);
-  }
+//   if (name) {
+//     query += " WHERE name LIKE ?";
+//     params.push(`%${name}%`);
+//   }
 
-  const dbRecipes = await DButils.execQuery(query, params);
+//   const dbRecipes = await DButils.execQuery(query, params);
 
-  return dbRecipes.map((r) => ({
-    id: r.recipe_id,
-    title: r.name,
-    image: r.img,
-    readyInMinutes: r.time,
-    popularity: r.popularity,
-    vegan: r.isVegan === 1,
-    vegetarian: r.isVegetarian === 1,
-    glutenFree: r.isGlutenFree === 1
-  }));
-}
+//   return dbRecipes.map((r) => ({
+//     id: r.recipe_id,
+//     title: r.name,
+//     image: r.img,
+//     readyInMinutes: r.time,
+//     popularity: r.popularity,
+//     vegan: r.isVegan === 1,
+//     vegetarian: r.isVegetarian === 1,
+//     glutenFree: r.isGlutenFree === 1
+//   }));
+// }
 
 async function addToRecentlyViewed(user_id, recipe_id) {
   // Delete duplicate entry
@@ -381,7 +381,7 @@ exports.getUserCreatedRecipes = getUserCreatedRecipes;
 exports.getRecipeDetails = getRecipeDetails;
 exports.saveUserRecipe = saveUserRecipe;
 exports.getSpoonacularRecipesPreview = getSpoonacularRecipesPreview;
-exports.getLocalRecipesPreview = getLocalRecipesPreview;
+// exports.getLocalRecipesPreview = getLocalRecipesPreview;
 exports.getUserRecipes = getUserRecipes;
 exports.getFamilyRecipes = getFamilyRecipes;
 exports.searchSpoonacularRecipes = searchSpoonacularRecipes;
