@@ -38,7 +38,7 @@ app.options("*", cors(corsConfig));
 
 
 // Static files
-app.use(express.static(path.join(__dirname, '../assignment3_3-frontend-main/dist')));
+app.use(express.static(path.join(__dirname, '../assignment3-3-316352715_209196104_assignment2/dist')));
 
 // Cookie middleware
 app.use(async (req, res, next) => {

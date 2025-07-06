@@ -27,7 +27,7 @@ router.get("/", async (req, res, next) => {
       }
 
       externalRecipes = await recipes_utils.searchSpoonacularRecipes(queryParams);
-      localRecipes = await recipes_utils.getLocalRecipesPreview(queryParams.name);
+      localRecipes = await recipes_utils.getLocalRecipesPreview(queryParams.title);
     } else {
       externalRecipes = await recipes_utils.getSpoonacularRecipesPreview(limit, 0);
       localRecipes = await recipes_utils.getLocalRecipesPreview();
@@ -58,7 +58,13 @@ router.get("/random", async (req, res, next) => {
 
 router.get("/viewed", async (req, res, next) => {
   try {
-    const previews = await recipes_utils.getViewedRecipesPreview(req.session.user_id);
+    const user_id = req.session?.user_id;
+
+    if (!user_id) {
+      return res.status(401).send({ message: "User not logged in" });
+    }
+
+    const previews = await recipes_utils.getViewedRecipesPreview(user_id);
     res.status(200).send(previews);
   } catch (err) {
     next(err);
@@ -123,13 +129,15 @@ router.get("/family-recipes/:id", async (req, res, next) => {
  */
 router.get("/:id", async (req, res, next) => {
   try {
-    const recipe_id = req.params.id;
+    let recipe_id = req.params.id;
+
+    if (!/^\d+$/.test(recipe_id) && !/^L\d+$/i.test(recipe_id) && !/^F\d+$/i.test(recipe_id)) {
+      return res.status(400).send({ message: "Invalid recipe ID format" });
+    }
+
     let recipe;
 
-    
-    const isLocal = /^L\d+$/i.test(recipe_id);
-
-    if (isLocal) {
+    if (/^L\d+$/i.test(recipe_id)) {
       recipe = await recipes_utils.getLocalRecipeDetails(recipe_id);
     } else {
       recipe = await recipes_utils.getRecipeDetails(recipe_id);
@@ -138,15 +146,6 @@ router.get("/:id", async (req, res, next) => {
     if (req.session?.user_id) {
       await recipes_utils.addToRecentlyViewed(req.session.user_id, recipe_id);
     }
-    // if (req.session && req.session.user_id) {
-    //   if (!Array.isArray(req.session.viewedRecipes)) {
-    //     req.session.viewedRecipes = [];
-    //   }
-
-    //   if (!req.session.viewedRecipes.includes(recipe_id)) {
-    //     req.session.viewedRecipes.push(recipe_id);
-    //   }
-    // }
 
     res.send(recipe);
 
@@ -157,10 +156,11 @@ router.get("/:id", async (req, res, next) => {
 
 
 
+
 router.post("/", async(req,res,next) => {
     try{
       const requiredFields = [
-        "img", "name", "time",
+        "img", "title", "time",
         "popularity", "isVegan", "isVegetarian",
         "isGlutenFree","ingredients","instructions"
       ];

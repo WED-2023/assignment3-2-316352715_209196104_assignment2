@@ -145,7 +145,14 @@ router.post("/logout", (req, res) => {
       return res.status(500).send({ message: "Logout failed" });
     }
 
-    res.clearCookie("connect.sid");
+    // 👇 זה הקריטי
+    res.clearCookie("connect.sid", {
+      path: '/',
+      httpOnly: true,
+      secure: true,
+      sameSite: "none"
+    });
+
     res.status(200).send({ message: "Logout successful" });
   });
 });

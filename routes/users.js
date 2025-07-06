@@ -7,7 +7,7 @@ const { requireLogin } = require("./utils/middleware"); //
 
 router.get("/me", async (req, res, next) => {
   try {
-    res.setHeader("Cache-Control", "no-store"); // 👈 קריטי!
+    res.setHeader("Cache-Control", "no-store"); 
     if (!req.session?.user_id) {
       return res.status(401).json({ message: "Not authenticated" });
     }
@@ -22,7 +22,6 @@ router.get("/me", async (req, res, next) => {
   }
 });
 
-// ===== 🔒 PRIVATE ROUTES =====
 router.use(requireLogin); 
 
 router.post('/favorites', async (req, res, next) => {
@@ -42,7 +41,7 @@ router.post('/favorites', async (req, res, next) => {
     if (existing.length > 0) {
       return res.status(409).json({ message: "Recipe is already in favorites" });
     }
-
+    console.log("User", user_id, "is marking recipe as favorite:", recipe_id);
     await user_utils.markAsFavorite(user_id, recipe_id);
     res.status(200).send({ message: "The Recipe successfully saved as favorite" });
 
@@ -50,20 +49,42 @@ router.post('/favorites', async (req, res, next) => {
     next(error);
   }
 });
-
 router.get('/favorites', async (req, res, next) => {
   try {
     const user_id = req.session.user_id;
 
     const recipes_id = await user_utils.getFavoriteRecipes(user_id);
-    const recipes_id_array = recipes_id.map((element) => element.recipe_id);
-    const results = await recipe_utils.getRecipesPreview(recipes_id_array);
+    console.log("Filtered favorite recipe IDs for user", user_id, ":", recipes_id);
+
+    const results = await recipe_utils.getRecipesPreview(recipes_id);
     res.status(200).send(results);
 
   } catch (error) {
     next(error);
   }
 });
+
+router.delete('/favorites/:id', async (req, res, next) => {
+  try {
+    const user_id = req.session.user_id;
+    const recipe_id = req.params.id;
+
+    if (!recipe_id) {
+      return res.status(400).json({ message: "Missing recipeId in URL" });
+    }
+
+    await DButils.execQuery(
+      `DELETE FROM user_favorites WHERE user_id = ? AND recipe_id = ?`,
+      [user_id, recipe_id]
+    );
+
+    res.status(200).json({ message: "Recipe removed from favorites" });
+  } catch (error) {
+    next(error);
+  }
+});
+
+
 
 router.put("/me", async (req, res, next) => {
   try {
