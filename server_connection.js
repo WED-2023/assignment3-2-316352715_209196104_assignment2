@@ -1,5 +1,8 @@
 var path = require("path");
-require('dotenv').config(); // בראש הקובץ, לפני השימוש ב-main
+require('dotenv').config(); 
+if (!process.env.spoonacular_apiKey) {
+  throw new Error("❌ Missing Spoonacular API key! Check your .env file and its path.");
+}
 var app = require('./main');
 var https = require('https');
 var fs = require('fs');

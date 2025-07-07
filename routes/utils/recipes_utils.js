@@ -1,12 +1,18 @@
 const axios = require("axios");
+const path = require("path");
 const api_domain = "https://api.spoonacular.com/recipes";
 const DButils = require("./DButils");
+
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+if (!process.env.spoonacular_apiKey) {
+  throw new Error("❌ Missing Spoonacular API key! Check your .env file and its path.");
+}
 
 
 
 
 /**
- * Get recipes list from spooncular response and extract the relevant recipe data for preview
+ * Get recipes list from spoonacular response and extract the relevant recipe data for preview
  * @param {*} recipes_info 
  */
 
@@ -15,18 +21,22 @@ const DButils = require("./DButils");
 async function getSpoonacularRecipesPreview(limit = 50, offset = 0) {
   const response = await axios.get(`${api_domain}/complexSearch`, {
     params: {
-      apiKey: process.env.spooncular_apiKey,
+      apiKey: process.env.spoonacular_apiKey,
       number: limit,
       offset: offset,
-      addRecipeInformation: false, 
+      addRecipeInformation: true, 
     }
   });
 
   return response.data.results.map(r => ({
-    id: r.id,
-    title: r.title,
-    image: r.image
-  }));
+  id: r.id,
+  title: r.title,
+  image: r.image,
+  ...parseDietFlags(r),  
+  readyInMinutes: r.readyInMinutes,
+  popularity: r.aggregateLikes || 0
+}));
+
 }
 
 
@@ -187,7 +197,7 @@ async function getFamilyRecipes(recipe_id = null) {
 async function searchSpoonacularRecipes(params) {
   const response = await axios.get(`${api_domain}/complexSearch`, {
     params: {
-      apiKey: process.env.spooncular_apiKey,
+      apiKey: process.env.spoonacular_apiKey,
       query: params.title || '',
       cuisine: params.cuisine,
       diet: params.diet,
@@ -281,15 +291,6 @@ async function getUserRecipes(user_id, recipe_id = null) {
   }));
 }
 
-module.exports = {
-  getFamilyRecipes,
-  searchSpoonacularRecipes,
-  getRecipeDetails,
-  getRecipeInformation,
-  getLocalRecipesPreview,
-  getUserRecipes
-};
-
 
 async function getUserCreatedRecipes(user_id) {
   const result = await DButils.execQuery(
@@ -345,7 +346,7 @@ async function getRecipesPreview(recipes_id_list) {
 async function getRandomSpoonacularRecipesPreview(count = 3) {
   const response = await axios.get(`${api_domain}/random`, {
     params: {
-      apiKey: process.env.spooncular_apiKey,
+      apiKey: process.env.spoonacular_apiKey,
       number: count
     }
   });
