@@ -61,10 +61,12 @@ app.use("/users", require("./routes/users.js"));
 app.use("/recipes", require("./routes/recipes"));
 app.use("/auth", require("./routes/auth"));
 
-// Frontend fallback
+
+// SPA fallback – for Vue Router routes
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, '../assignment3_3-frontend-main/dist/index.html'));
+  res.sendFile(path.join(__dirname, '../assignment3-3-316352715_209196104_assignment2/dist/index.html'));
 });
+
 
 // Error handler
 app.use((err, req, res, next) => {

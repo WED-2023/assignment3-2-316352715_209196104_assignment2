@@ -2,6 +2,7 @@ const axios = require("axios");
 const path = require("path");
 const api_domain = "https://api.spoonacular.com/recipes";
 const DButils = require("./DButils");
+const { Result } = require("express-validator");
 
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 if (!process.env.spoonacular_apiKey) {
@@ -94,10 +95,10 @@ async function addToRecentlyViewed(user_id, recipe_id) {
   );
 
   // If already 3 entries, delete the oldest
-  if (existing.length >= 3) {
-    const oldestId = existing[0].id;
-    await DButils.execQuery("DELETE FROM recent_recipes WHERE id = ?", [oldestId]);
-  }
+  // if (existing.length >= 3) {
+  //   const oldestId = existing[0].id;
+  //   await DButils.execQuery("DELETE FROM recent_recipes WHERE id = ?", [oldestId]);
+  // }
 
   // Insert new entry
   await DButils.execQuery(
@@ -361,18 +362,39 @@ async function getRandomSpoonacularRecipesPreview(count = 3) {
     isVegetarian: r.vegetarian,
     isGlutenFree: r.glutenFree
   }));
-}
-async function getViewedRecipesPreview(user_id) {
+};
+
+async function getViewedRecipesIDS(user_id){
   const result = await DButils.execQuery(
-    "SELECT recipe_id FROM recent_recipes WHERE user_id = ? ORDER BY viewed_at DESC LIMIT 3",
+    `
+    SELECT recipe_id 
+    FROM recent_recipes 
+    WHERE user_id = ? 
+    `,
+    [user_id]
+  );
+  return result;
+};
+
+async function getViewedRecipesPreview(user_id) {
+
+  const result = await DButils.execQuery(
+    `
+    SELECT recipe_id 
+    FROM recent_recipes 
+    WHERE user_id = ? 
+    ORDER BY viewed_at DESC 
+    LIMIT 3
+    `,
     [user_id]
   );
 
-const recipeIds = result.map(r =>
-  typeof r.recipe_id === 'object'
-    ? r.recipe_id.recipe_id || r.recipe_id.id || r.recipe_id.toString()
-    : r.recipe_id
-);
+  const recipeIds = result.map((r) =>
+    typeof r.recipe_id === "object"
+      ? r.recipe_id.recipe_id || r.recipe_id.id || r.recipe_id.toString()
+      : r.recipe_id
+  );
+
   const fullDetails = [];
 
   for (const id of recipeIds) {
@@ -389,7 +411,7 @@ const recipeIds = result.map(r =>
 
       fullDetails.push(recipe);
     } catch (err) {
-      console.warn(`Failed to load recipe ${id}:`, err.message || err);
+      console.warn(`⚠️ Failed to load recipe ${id}:`, err.message || err);
     }
   }
 
@@ -414,5 +436,6 @@ module.exports = {
   getRandomSpoonacularRecipesPreview, 
   getViewedRecipesPreview,
   getLocalRecipeDetails,
-  addToRecentlyViewed
+  addToRecentlyViewed,
+  getViewedRecipesIDS
 };

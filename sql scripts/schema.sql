@@ -57,7 +57,7 @@ CREATE TABLE family_recipes (
   instructions TEXT NOT NULL
 );
 
-SHOW CREATE TABLE user_favorites;-- tofu
+SHOW CREATE TABLE user_favorites;
 INSERT INTO family_recipes (
   recipe_id,
   title,

@@ -68,6 +68,27 @@ router.get("/viewed", async (req, res, next) => {
   }
 });
 
+router.get("/viewed/ids", async (req, res, next) => {
+  try {
+    const user_id = req.session?.user_id;
+    if (!user_id) {
+      return res.status(401).send({ message: "User not logged in" });
+    }
+
+    const ids = await recipes_utils.getViewedRecipesIDS(user_id);
+    const cleanIds = ids.map(r => typeof r.recipe_id === 'object'
+      ? r.recipe_id.recipe_id || r.recipe_id.id || r.recipe_id.toString()
+      : r.recipe_id
+    );
+
+    res.status(200).send(cleanIds);
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+
 router.get("/myRecipes", async (req, res, next) => {
   try {
     if (!req.session?.user_id) {
@@ -131,7 +152,7 @@ router.get("/:id", async (req, res, next) => {
       recipe = await recipes_utils.getRecipeDetails(recipe_id);
     }
 
-    if (req.session?.user_id) {
+    if (req.session?.user_id ) {
       await recipes_utils.addToRecentlyViewed(req.session.user_id, recipe_id);
     }
 
