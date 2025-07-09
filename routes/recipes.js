@@ -87,6 +87,28 @@ router.get("/viewed/ids", async (req, res, next) => {
   }
 });
 
+// routes/recipes.js
+router.post('/viewed/:id', async (req, res, next) => {
+  try {
+    const user_id = req.session?.user_id;
+    if (!user_id) {
+      return res.status(401).send({ message: 'User not logged in' });
+    }
+
+    const recipe_id = req.params.id;
+    if (!/^\d+$/.test(recipe_id) && !/^L\d+$/i.test(recipe_id) && !/^F\d+$/i.test(recipe_id)) {
+      return res.status(400).send({ message: 'Invalid recipe ID format' });
+    }
+
+    await recipes_utils.addToRecentlyViewed(user_id, recipe_id);
+    // 204 = הצליח, אין תוכן
+    res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+});
+
+
 
 
 router.get("/myRecipes", async (req, res, next) => {
@@ -150,10 +172,6 @@ router.get("/:id", async (req, res, next) => {
       recipe = await recipes_utils.getLocalRecipeDetails(recipe_id);
     } else {
       recipe = await recipes_utils.getRecipeDetails(recipe_id);
-    }
-
-    if (req.session?.user_id ) {
-      await recipes_utils.addToRecentlyViewed(req.session.user_id, recipe_id);
     }
 
     res.send(recipe);
